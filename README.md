@@ -20,12 +20,12 @@
 
 기술 <br>
 웹 벡엔드 <br>
-비디오 스트리밍(각 노드, 서버) <br>
-AWS 송수신(서버-노드) <br>
+비디오 스트리밍(각 노드) <br>
+AWS 송수신(서버-게이트웨이) [[AWScpp]](https://sdk.amazonaws.com/cpp/api/LATEST/root/html/index.html)<br>
 
 HW <br>
 esp32 <br>
 라즈베리파이 <br>
-halow모듈 <br>
+halow모듈 [[vctec]]([https://ko.aliexpress.com/item/1005004619322188.html](https://vctec.co.kr/product/wifi-halow-%ED%86%B5%EC%8B%A0-hat-%EB%B3%B4%EB%93%9C-915mhz-alfa-network-wifi-halow-hat/20592/)https://vctec.co.kr/product/wifi-halow-%ED%86%B5%EC%8B%A0-hat-%EB%B3%B4%EB%93%9C-915mhz-alfa-network-wifi-halow-hat/20592/)<br>
 
 ![image](https://github.com/baejaeho18/HandongCCTV_HaLow/assets/37645490/3acc767a-006d-44fa-a789-295b2d445a48)
