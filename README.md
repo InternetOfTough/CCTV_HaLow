@@ -107,7 +107,7 @@ make -j4
 
 ![Alt text](<2024-01-24 223841.png>)
 
-## Referece
+## Reference
 
 - [cmake 구성](https://modoocode.com/332)
 - [우분투에 opencv설치](https://roytravel.tistory.com/383)
