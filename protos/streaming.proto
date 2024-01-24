@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package streaming;
+
+message EmptyMessage {
+}
+
+// The request message containing the image.
+message Frame {
+    bytes data = 1;
+}
+
+service Streaming {
+    rpc StreamVideo(stream Frame) returns (EmptyMessage);
+}
