@@ -26,7 +26,7 @@ else()
   )
   set(FETCHCONTENT_QUIET OFF)
   FetchContent_MakeAvailable(gRPC)
-endif()
+endif() 
 
 set(_PROTOBUF_LIBPROTOBUF libprotobuf)
 set(_REFLECTION grpc++_reflection)
@@ -117,7 +117,7 @@ add_library(server_lib STATIC ${SERVER_SRC_FILES})
 target_include_directories(client_lib PUBLIC ${CMAKE_SOURCE_DIR}/include/client ${proto_gen_dir})
 
 # server 의 include 경로 지정
-target_include_directories(server_lib PUBLIC ${CMAKE_SOURCE_DIR}/include/server ${proto_gen_dir})
+target_include_directories(server_lib PUBLIC ${CMAKE_SOURCE_DIR}/include/server ${proto_gen_dir}  /home/kho/cpp/httplib/cpp-httplib )
 
 # find_library(GRPC_LIBRARY grpc++)
 # if(GRPC_LIBRARY)
