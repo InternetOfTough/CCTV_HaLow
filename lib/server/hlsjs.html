@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 
 <head>
@@ -38,60 +39,3 @@
 </body>
 
 </html>
-
-<!-- <!DOCTYPE html>
-<html lang="en">
-
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Video live streaming</title>
-  <style>
-    #videoFrame {
-      text-align: center;
-    }
-  </style>
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js"></script>
-</head>
-
-<body>
-  <div id="videoFrame">
-    <video width="640" height="480" id="video" autoplay muted controls></video>
-    <div>The video may have a delay of up to 30 seconds.</div>
-  </div>
-  <script>
-    var video = document.getElementById("video");
-    var hls;
-
-    function startStreaming() {
-      if (Hls.isSupported()) {
-        hls = new Hls();
-        hls.loadSource("http://localhost:9002/output.m3u8");
-        hls.attachMedia(video);
-        hls.on(Hls.Events.MANIFEST_PARSED, function () {
-          video.play();
-        });
-      } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-        video.src = "http://localhost:9002/output.m3u8";
-        video.addEventListener("loadedmetadata", function () {
-          video.play();
-        });
-      }
-    }
-
-    // 시작 시 한 번 호출
-    startStreaming();
-
-    // 5초마다 새로고침
-    setInterval(function () {
-      if (hls) {
-        hls.startLoad();
-        hls.on(Hls.Events.MANIFEST_PARSED, function () {
-          video.play();
-        });
-      }
-    }, 5000);
-  </script>
-</body>
-
-</html> -->

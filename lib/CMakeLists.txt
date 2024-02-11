@@ -117,7 +117,7 @@ add_library(server_lib STATIC ${SERVER_SRC_FILES})
 target_include_directories(client_lib PUBLIC ${CMAKE_SOURCE_DIR}/include/client ${proto_gen_dir})
 
 # server 의 include 경로 지정
-target_include_directories(server_lib PUBLIC ${CMAKE_SOURCE_DIR}/include/server ${proto_gen_dir}  /home/kho/cpp/httplib/cpp-httplib )
+target_include_directories(server_lib PUBLIC ${CMAKE_SOURCE_DIR}/include/server ${proto_gen_dir})
 
 # find_library(GRPC_LIBRARY grpc++)
 # if(GRPC_LIBRARY)
@@ -150,10 +150,18 @@ target_compile_features(server_lib PRIVATE cxx_std_17)
 find_package( OpenCV REQUIRED )
 # include_directories( ${OpenCV_INCLUDE_DIRS} ) -> ${OpenCV_LIBS}를 PUBLIC으로 추가했기 때문에 이건 할 필요가 없음
 
+#FFmpeg 라이브러리 찾기 (FFmpeg는 find_package 지원 x)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(FFMPEG REQUIRED IMPORTED_TARGET
+    libavformat
+    libavcodec
+    libavutil
+)
 
 # client_lib 에 링크
 target_link_libraries(client_lib PUBLIC 
-    fmt 
+    fmt
+    PkgConfig::FFMPEG
     ${OpenCV_LIBS}
     grpc++     
     hw_grpc_proto

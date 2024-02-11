@@ -4,7 +4,7 @@
 #include <opencv2/opencv.hpp>
 #include "ServerVideoStreamer.h"
 #include "WebSockVariable.h"
-
+#include "directoryAPI.h"
 #include <fstream>
 #include <httplib.h>
 
@@ -20,73 +20,87 @@ using namespace ::std;
 
 Status VideoStreamingImpl::StreamVideo(ServerContext *context, ServerReader<Frame> *reader, EmptyMessage *response)
 {
-  /* JPG로 압축해서 영상 전송!
+  // JPG로 압축해서 영상 전송!
+  // Frame frame;
+  // while (reader->Read(&frame))
+  // {
+  //   if (isConnected)
+  //     serverWeb.send(hdl, frame.data(), websocketpp::frame::opcode::binary);
+  //   Mat decoded_frame;
+  //   Mat data_mat(1, frame.data().size(), CV_8U, (void *)frame.data().data());
+
+  //   try
+  //   {
+  //     // OpenCV Mat으로 디코딩
+  //     decoded_frame = imdecode(data_mat, IMREAD_UNCHANGED);
+  //   }
+  //   catch (const cv::Exception &ex)
+  //   {
+  //     std::cerr << "Error decoding frame: " << ex.what() << std::endl;
+  //     return Status::CANCELLED;
+  //   }
+
+  //   if (decoded_frame.empty())
+  //   {
+  //     std::cerr << "Error decoding frame" << std::endl;
+  //     return Status::CANCELLED;
+  //   }
+
+  //   imshow("Server Stream", decoded_frame);
+  //   if (waitKey(1) == 27) // Break the loop on ESC key press
+  //     break;
+  // }
+
+  // return Status::OK;
+  
+
+  // MP4로 압축해서 전송 받음!
   Frame frame;
+
+ 
   while (reader->Read(&frame))
   {
-    if (isConnected)
-      serverWeb.send(hdl, frame.data(), websocketpp::frame::opcode::binary);
-    Mat decoded_frame;
-    Mat data_mat(1, frame.data().size(), CV_8U, (void *)frame.data().data());
 
-    try
+    // 디렉터리 생성 여부 확인
+    if (createDirectoryIfNotExists(directoryPath))
     {
-      // OpenCV Mat으로 디코딩
-      decoded_frame = imdecode(data_mat, IMREAD_UNCHANGED);
+      // 디렉터리가 성공적으로 생성되면 파일에 버퍼 내용 쓰기
+
+      const string filePath = directoryPath + to_string(nameIndex) + fileType;
+      if (writeMsgToFile(frame.release_data(), filePath))
+      {
+        std::cout << "File successfully created: " << nameIndex << ".mp4" << std::endl;
+        updateM3u8();
+      }
+      else
+      {
+        std::cerr << "Failed to write buffer to file" << std::endl;
+      }
     }
-    catch (const cv::Exception &ex)
+    else
     {
-      std::cerr << "Error decoding frame: " << ex.what() << std::endl;
-      return Status::CANCELLED;
+      std::cerr << "Failed to create directory" << std::endl;
     }
 
-    if (decoded_frame.empty())
-    {
-      std::cerr << "Error decoding frame" << std::endl;
-      return Status::CANCELLED;
-    }
-
-    imshow("Server Stream", decoded_frame);
-    if (waitKey(1) == 27) // Break the loop on ESC key press
-      break;
-  }
-
-  return Status::OK;
-  */
-
-  // MP4로 압축해서 전송!
-  Frame frame;
-  int index = 1;
-  while (reader->Read(&frame))
-  {
-    updateM3u8(index++);
+    nameIndex++;
   }
 
   return Status::OK;
 }
 
-void VideoStreamingImpl::updateM3u8(int index)
+void VideoStreamingImpl::updateM3u8()
 {
-
-  // ffmpeg 명령어를 실행
-  string firstCommand1 = "ffmpeg -i ";
-  string afterCommand1 = ".mp4 -c:v copy -f hls -hls_time 5 -hls_list_size 5 -hls_delete_threshold 1 -hls_flags delete_segments+omit_endlist output.m3u8";
-
-  string firstCommand2 = "ffmpeg -i ";
-  string afterCommand2 = ".mp4 -c:v copy -f hls -hls_time 5 -hls_list_size 5 -hls_delete_threshold 1 -hls_flags delete_segments+append_list+omit_endlist output.m3u8";
-
   int result;
-  if (index == 1)
+  if (nameIndex == 1)
   {
-    firstCommand1.append(to_string(index));
-    firstCommand1.append(afterCommand1);
-    result = system(firstCommand1.c_str());
+    const string command1 = firstCommand1 + directoryPath + to_string(nameIndex) + afterCommand1;
+
+    result = system(command1.c_str());
   }
   else
   {
-    firstCommand2.append(to_string(index));
-    firstCommand2.append(afterCommand2);
-    result = system(firstCommand2.c_str());
+    const string command2 = firstCommand2 + directoryPath + to_string(nameIndex) + afterCommand2;
+    result = system(command2.c_str());
   }
 
   // 결과 확인
@@ -124,7 +138,7 @@ void runServerHLS(const std::string &address, int port)
   server.Get("/output.m3u8", [](const httplib::Request &req, httplib::Response &res)
              {
         // HLS 스트리밍 파일에 대한 경로
-        std::string hlsFilePath = "/home/kho/cpp/cctv/CCTV_HaLow/build/bin/output.m3u8";
+        std::string hlsFilePath = "/home/kho/cpp/cctv/CCTV_HaLow/video/output.m3u8";
 
         // 파일을 읽어와서 응답으로 전송
         std::ifstream file(hlsFilePath);
@@ -144,7 +158,7 @@ void runServerHLS(const std::string &address, int port)
     std::string wildcardPart = req.matches[1].str();
 
     // Form the complete path with the wildcard part
-    std::string tsFilePath = "/home/kho/cpp/cctv/CCTV_HaLow/build/bin/output" + wildcardPart + ".ts";
+    std::string tsFilePath = "/home/kho/cpp/cctv/CCTV_HaLow/video/output" + wildcardPart + ".ts";
 
 
     // 파일을 읽어와서 응답으로 전송
@@ -161,29 +175,8 @@ void runServerHLS(const std::string &address, int port)
         res.set_content("Not Found", "text/plain");
     } });
 
-  // server.Get("/output*.ts", [](const httplib::Request &req, httplib::Response &res)
-  //            {
-  // // .ts 파일에 대한 경로
-  // // Extract the wildcard part from the URL
-  // std::string wildcardPart = req.matches[0].str();
-
-  // // Form the complete path with the wildcard part
-  // std::string tsFilePath = "/home/kho/cpp/cctv/CCTV_HaLow/build/bin/output" + wildcardPart + ".ts";
-
-  // // 파일을 읽어와서 응답으로 전송
-  // std::ifstream file(tsFilePath);
-  // if (file.is_open()) {
-  //     std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-  //     res.set_content(content, "video/MP2T");  // .ts 파일의 MIME 타입
-  //     // CORS 허용 헤더 추가
-  //     res.set_header("Access-Control-Allow-Origin", "*");
-  // } else {
-  //     res.status = 404;
-  //     res.set_content("Not Found", "text/plain");
-  // } });
-
   // 원하는 포트로 서버를 시작
-  server.listen("localhost", port);
+  server.listen("172.30.1.27", port);
 
-  std::cout << "Server started at http://localhost:9002/" << std::endl;
+  std::cout << "Server started at http://172.30.1.27:9002/" << std::endl;
 }

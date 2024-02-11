@@ -23,8 +23,8 @@ int main(int argc, char **argv)
   std::thread serverThread(RunServer, absl::GetFlag(FLAGS_port));
   serverThread.detach();
 
-  // websocket for connection brower
-  //  Set logging
+  // // websocket for connection brower
+  // //  Set logging
   //  serverWeb.set_access_channels(websocketpp::log::alevel::all);
   //  serverWeb.clear_access_channels(websocketpp::log::alevel::frame_payload);
 

@@ -3,9 +3,6 @@
 #include <fstream>
 #include "ClientVideoStreamer.h"
 
-using namespace cv;
-using namespace std;
-
 VideoStreamer::VideoStreamer(const string &server_address)
     : stub_(Streaming::NewStub(grpc::CreateChannel(server_address, grpc::InsecureChannelCredentials())))
 {
@@ -40,8 +37,8 @@ void VideoStreamer::StreamVideo()
     }
 
     // Send frame to server
-    streaming::EmptyMessage response;
-    ClientContext context;
+    // streaming::EmptyMessage response;
+    // ClientContext context;
     std::unique_ptr<grpc::ClientWriter<Frame>> writer(stub_->StreamVideo(&context, &response).release());
 
     while (cap.read(frame))
@@ -99,70 +96,49 @@ void VideoStreamer::StreamVideo()
   }
 
   // 카메라 프레임의 너비와 높이 가져오기
-  int frameWidth = static_cast<int>(cap.get(CAP_PROP_FRAME_WIDTH));
-  int frameHeight = static_cast<int>(cap.get(CAP_PROP_FRAME_HEIGHT));
+  frameWidth = static_cast<int>(cap.get(CAP_PROP_FRAME_WIDTH));
+  frameHeight = static_cast<int>(cap.get(CAP_PROP_FRAME_HEIGHT));
 
   cout << "Width : " << frameWidth << endl;
   cout << "Height : " << frameHeight << endl;
-  // 비디오 작성자 생성
-  unsigned int nameIndex = 1;
-  const string firstName("1.mp4");
-  const string fileType = ".mp4";
-  string outputFileName;
+
+  // MemoryVideoWriter setup
+  memoryVideoWriter = new MemoryVideoWriter(frameWidth, frameHeight, 10);
+
   outputFileName.append(to_string(nameIndex));
   outputFileName.append(fileType);
-  // VideoWriter out(outputFileName, VideoWriter::fourcc('H', '2', '6', '4'), 30, Size(frameWidth, frameHeight));
-  VideoWriter out(outputFileName, VideoWriter::fourcc('a', 'v', 'c', '1'), 30, Size(frameWidth, frameHeight), true); // fps = 30, avc1-> H.264 코덱의 일종
+
+  // 비디오 작성자 생성
+  // int capture_fps = 30;
+  // cap.set(CAP_PROP_FPS, capture_fps);
+  VideoWriter out(outputFileName, VideoWriter::fourcc('a', 'v', 'c', '1'), 10, Size(frameWidth, frameHeight), true); // fps = 30, avc1-> H.264 코덱의 일종
 
   // 시작 시간 기록
-  const int durationSeconds = 10;
-  int64 startTickCount = getTickCount();
+  startTickCount = getTickCount();
   // Send mp4 to server
-  streaming::EmptyMessage response;
-  ClientContext context;
+  // streaming::EmptyMessage response;
+  // ClientContext context;
   unique_ptr<grpc::ClientWriter<Frame>> writer(stub_->StreamVideo(&context, &response).release());
 
-  while (cap.read(frame))
+  while (true)
   {
-
-    // // check if we succeeded
+    cap.read(frame);
+    // check if we succeeded
     if (frame.empty())
     {
       cerr << "ERROR! blank frame grabbed\n";
-      break;
+      continue;
     }
 
     // 비디오 작성
-    out.write(frame);
+    // out.write(frame);
+    // encodeToFile(writer, out);
 
-    // 경과 시간 계산
-    double elapsedSeconds = (getTickCount() - startTickCount) / getTickFrequency();
+    // Write frame to MemoryVideoWriter
+    memoryVideoWriter->WriteFrame(frame);
+    encodeToMemory(writer);
 
-    cout << "경과 시간 :" << elapsedSeconds << endl;
-    // 지정된 시간 동안 캡처하고 종료
-    if (elapsedSeconds >= durationSeconds)
-    {
-      out.release(); // VideoWriter의 release 함수 호출
-
-      // Convert OpenCV mp4 to gRPC Frame message
-      Frame frame_message;
-      vector<char> buffer;
-
-      readFile(outputFileName, buffer);
-
-      // Set the buffer to the frame message
-      frame_message.mutable_data()->assign(buffer.begin(), buffer.end());
-
-      // Send mp4 to server
-      writer->Write(frame_message);
-      nameIndex++;
-      outputFileName.clear();
-      outputFileName.append(to_string(nameIndex));
-      outputFileName.append(fileType);
-      // out.open(outputFileName, VideoWriter::fourcc('H', '2', '6', '5'), 30, Size(frameWidth, frameHeight));
-      out.open(outputFileName, VideoWriter::fourcc('a', 'v', 'c', '1'), 30, Size(frameWidth, frameHeight), true);
-      startTickCount = getTickCount();
-    }
+    frameCount++;
   }
 
   // 클라이언트의 스트리밍 완료
@@ -175,10 +151,77 @@ void VideoStreamer::StreamVideo()
   }
   // Release the VideoCapture and close OpenCV window
   cap.release();
-  // delete out;
   destroyAllWindows();
 }
 
+void VideoStreamer::encodeToFile(unique_ptr<grpc::ClientWriter<Frame>> &writer, VideoWriter &out)
+{
+  // 경과 시간 계산
+  double elapsedSeconds = (getTickCount() - startTickCount) / getTickFrequency();
+
+  cout << "경과 시간 :" << elapsedSeconds << endl;
+  // 지정된 시간 동안 캡처하고 종료
+  if (elapsedSeconds >= durationSeconds)
+  {
+    int64 delayStart = getTickCount();
+    out.release(); // VideoWriter의 release 함수 호출
+
+    // Convert OpenCV mp4 to gRPC Frame message
+    Frame frame_message;
+    vector<char> buffer;
+
+    readFile(outputFileName, buffer);
+
+    // Set the buffer to the frame message
+    frame_message.mutable_data()->assign(buffer.begin(), buffer.end());
+
+    writer->Write(frame_message);
+    nameIndex++;
+    outputFileName.clear();
+    outputFileName.append(to_string(nameIndex));
+    outputFileName.append(fileType);
+    out.open(outputFileName, VideoWriter::fourcc('a', 'v', 'c', '1'), frameCount / durationSeconds, Size(frameWidth, frameHeight), true);
+
+    startTickCount = getTickCount();
+    frameCount = 0;
+    double delay = (startTickCount - delayStart) / getTickFrequency();
+    cout << "videowrite delay: " << delay << endl;
+  }
+}
+
+void VideoStreamer::encodeToMemory(unique_ptr<grpc::ClientWriter<Frame>> &writer)
+{
+  // 경과 시간 계산
+  double elapsedSeconds = (getTickCount() - startTickCount) / getTickFrequency();
+
+  cout << "경과 시간 :" << elapsedSeconds << endl;
+  // 지정된 시간 동안 캡처하고 종료
+  if (elapsedSeconds >= durationSeconds)
+  {
+    int64 delayStart = getTickCount();
+    // Convert OpenCV mp4 to gRPC Frame message
+    Frame frame_message;
+
+    // Get the memory buffer
+    uint8_t *buffer = memoryVideoWriter->GetMemoryBuffer();
+
+    // Set the buffer to the frame message
+    frame_message.mutable_data()->assign(reinterpret_cast<const char *>(buffer), memoryVideoWriter->GetMemoryBufferSize());
+    std::cout << "buffer_size " << memoryVideoWriter->GetMemoryBufferSize() << std::endl;
+    // Send mp4 to server
+    writer->Write(frame_message);
+
+    delete (buffer);
+    // delete (memoryVideoWriter);
+    std::cout << "here" << std::endl;
+    memoryVideoWriter->reset(frameCount / durationSeconds);
+    // memoryVideoWriter = new MemoryVideoWriter(frameWidth, frameHeight, frameCount / durationSeconds);
+
+    startTickCount = getTickCount();
+    frameCount = 0;
+    cout << "memorywriter delay: " << (startTickCount - delayStart) / getTickFrequency() << endl;
+  }
+}
 void VideoStreamer::readFile(std::string &filePath, std::vector<char> &buffer)
 {
   // 파일을 바이너리 모드로 읽기
