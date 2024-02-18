@@ -55,17 +55,17 @@ set(hw_grpc_srcs "${proto_gen_dir}/streaming.grpc.pb.cc")
 set(hw_grpc_hdrs "${proto_gen_dir}/streaming.grpc.pb.h")
 
 
-find_program(PROTOC protoc)
-if(NOT PROTOC)
-    message(FATAL_ERROR "protoc not found. Make sure it is installed or specify the path.")
-endif()
+# find_program(PROTOC protoc)
+# if(NOT PROTOC)
+#     message(FATAL_ERROR "protoc not found. Make sure it is installed or specify the path.")
+# endif()
 
-# Use PROTOC in your CMake commands
+# # Use PROTOC in your CMake commands
 
-find_program(GRPC_CPP_PLUGIN grpc_cpp_plugin)
-if(NOT GRPC_CPP_PLUGIN)
-    message(FATAL_ERROR "grpc_cpp_plugin not found. Make sure it is installed or specify the path.")
-endif()
+# find_program(GRPC_CPP_PLUGIN grpc_cpp_plugin)
+# if(NOT GRPC_CPP_PLUGIN)
+#     message(FATAL_ERROR "grpc_cpp_plugin not found. Make sure it is installed or specify the path.")
+# endif()
 
 
 add_custom_command(
