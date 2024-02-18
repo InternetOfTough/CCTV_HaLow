@@ -152,6 +152,42 @@ void VideoStreamer::StreamVideo()
   cap.release();
   destroyAllWindows();
 }
+void VideoStreamer::encodeToMemory(unique_ptr<grpc::ClientWriter<Frame>> &writer)
+{
+  // 경과 시간 계산
+  double elapsedSeconds = (getTickCount() - startTickCount) / getTickFrequency();
+
+  cout << "경과 시간 :" << elapsedSeconds << endl;
+  // 지정된 시간 동안 캡처
+  if (elapsedSeconds >= durationSeconds)
+  {
+    int64 delayStart = getTickCount();
+
+    Frame frame_message;
+    frame_message.set_name(pi_name_);
+    frame_message.set_status(checkPiStatus());
+
+    // Get the memory buffer
+    uint8_t *buffer = memoryVideoWriter->GetMemoryBuffer();
+
+    // Set the buffer to the frame message
+    frame_message.mutable_data()->assign(reinterpret_cast<const char *>(buffer), memoryVideoWriter->GetMemoryBufferSize());
+    cout << "buffer_size " << memoryVideoWriter->GetMemoryBufferSize() << endl;
+    // Send mp4 to server
+    if (!writer->Write(frame_message))
+    {
+      cerr << "server disconnected " << endl;
+      exit(1);
+    }
+
+    memoryVideoWriter->reset(frameCount / durationSeconds, buffer);
+
+    startTickCount = getTickCount();
+    frameCount = 0;
+    cout << "\nmemory writer delay: "
+         << (startTickCount - delayStart) / getTickFrequency() << "\n\n";
+  }
+}
 
 void VideoStreamer::encodeToFile(unique_ptr<grpc::ClientWriter<Frame>> &writer, VideoWriter &out)
 {
@@ -192,42 +228,6 @@ void VideoStreamer::encodeToFile(unique_ptr<grpc::ClientWriter<Frame>> &writer, 
   }
 }
 
-void VideoStreamer::encodeToMemory(unique_ptr<grpc::ClientWriter<Frame>> &writer)
-{
-  // 경과 시간 계산
-  double elapsedSeconds = (getTickCount() - startTickCount) / getTickFrequency();
-
-  cout << "경과 시간 :" << elapsedSeconds << endl;
-  // 지정된 시간 동안 캡처
-  if (elapsedSeconds >= durationSeconds)
-  {
-    int64 delayStart = getTickCount();
- 
-    Frame frame_message;
-    frame_message.set_name(pi_name_);
-    frame_message.set_status(checkPiStatus());
-
-    // Get the memory buffer
-    uint8_t *buffer = memoryVideoWriter->GetMemoryBuffer();
-
-    // Set the buffer to the frame message
-    frame_message.mutable_data()->assign(reinterpret_cast<const char *>(buffer), memoryVideoWriter->GetMemoryBufferSize());
-    cout << "buffer_size " << memoryVideoWriter->GetMemoryBufferSize() << endl;
-    // Send mp4 to server
-    if (!writer->Write(frame_message))
-    {
-      cerr << "server disconnected " << endl;
-      exit(1);
-    }
-
-    memoryVideoWriter->reset(frameCount / durationSeconds, buffer);
-
-    startTickCount = getTickCount();
-    frameCount = 0;
-    cout << "\nmemory writer delay: "
-         << (startTickCount - delayStart) / getTickFrequency() << "\n\n";
-  }
-}
 void VideoStreamer::readFile(string &filePath, vector<char> &buffer)
 {
   // 파일을 바이너리 모드로 읽기
