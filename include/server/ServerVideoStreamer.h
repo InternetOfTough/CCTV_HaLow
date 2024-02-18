@@ -27,10 +27,9 @@ public:
 
 private:
   // ffmpeg 명령어를 실행
-  const string kFirstCommand1 = "ffmpeg -i ";
+  const string kFirstCommand = "ffmpeg -i ";
   const string kAfterCommand1 = ".mp4 -c:v copy -f hls -hls_time 10 -hls_list_size 6 -hls_delete_threshold 1 -hls_flags delete_segments+omit_endlist ./../../video/";
 
-  const string kFirstCommand2 = "ffmpeg -i ";
   const string kAfterCommand2 = ".mp4 -c:v copy -f hls -hls_time 10 -hls_list_size 6 -hls_delete_threshold 1 -hls_flags delete_segments+append_list+omit_endlist ./../../video/";
   const string kM38uName = "/output.m3u8";
 

@@ -102,13 +102,13 @@ void VideoStreamingImpl::updateM3u8(unsigned int nameIndex, string *piName)
   int result;
   if (nameIndex == 1)
   {
-    const string KCommand1 = kFirstCommand1 + kDirectoryPath + *piName + "/" + to_string(nameIndex) + kAfterCommand1 + *piName + kM38uName;
+    const string KCommand1 = kFirstCommand + kDirectoryPath + *piName + "/" + to_string(nameIndex) + kAfterCommand1 + *piName + kM38uName;
 
     result = system(KCommand1.c_str());
   }
   else
   {
-    const string KCommand2 = kFirstCommand2 + kDirectoryPath + *piName + "/" + to_string(nameIndex) + kAfterCommand2 + *piName + kM38uName;
+    const string KCommand2 = kFirstCommand + kDirectoryPath + *piName + "/" + to_string(nameIndex) + kAfterCommand2 + *piName + kM38uName;
     result = system(KCommand2.c_str());
   }
 
