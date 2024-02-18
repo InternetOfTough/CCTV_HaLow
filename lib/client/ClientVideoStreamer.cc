@@ -198,7 +198,7 @@ void VideoStreamer::encodeToMemory(unique_ptr<grpc::ClientWriter<Frame>> &writer
   double elapsedSeconds = (getTickCount() - startTickCount) / getTickFrequency();
 
   cout << "경과 시간 :" << elapsedSeconds << endl;
-  // 지정된 시간 동안 캡처하고 종료
+  // 지정된 시간 동안 캡처
   if (elapsedSeconds >= durationSeconds)
   {
     int64 delayStart = getTickCount();

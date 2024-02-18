@@ -128,7 +128,7 @@ void RunServer(uint16_t port)
 {
   VideoStreamingImpl service;
 
-  std::string server_address = absl::StrFormat("0.0.0.0:%d", port);
+  std::string server_address = absl::StrFormat("0.0.0.0:%d", port);// 0.0.0.0 -> 모든 주소 다 accept
 
   ServerBuilder builder;
   // Listen on the given address without any authentication mechanism.

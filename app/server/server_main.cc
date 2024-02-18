@@ -10,17 +10,23 @@
 #include <WebSockVariable.h>
 
 // set port num for grpc
-ABSL_FLAG(uint16_t, port, 10000, "Server port for the service");
+// ABSL_FLAG(uint16_t, port, 10000, "Server port for the service");
 
 int main(int argc, char **argv)
 {
 
+  if (argc != 2)
+  {
+    std::cerr << "Usage: program_server <Port>\n";
+    return 1;
+  }
+
   isConnected = false; // for 웹소켓 연결
 
   // Run the gRPC server
-  absl::ParseCommandLine(argc, argv);
+  // absl::ParseCommandLine(argc, argv);
   // RunServer(absl::GetFlag(FLAGS_port));
-  std::thread serverThread(RunServer, absl::GetFlag(FLAGS_port));
+  std::thread serverThread(RunServer, atoi(argv[1]));
   serverThread.detach();
 
   // // websocket for connection brower

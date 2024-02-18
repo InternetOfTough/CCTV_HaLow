@@ -9,23 +9,20 @@
 // using namespace std;
 
 // set server ip addr and port num for grpc
-ABSL_FLAG(std::string, target, "172.30.1.27:10000", "Server address");
-
+// ABSL_FLAG(std::string, target, "172.30.1.27:10000", "Server address");
 
 int main(int argc, char **argv)
 {
-
-  if (argc != 2)
+  // absl::ParseCommandLine(argc, argv);
+  if (argc != 3)
   {
-    std::cerr << "Usage: program_client <pi_name>\n";
+    std::cerr << "Usage: program_client <Ip:Port> <Pi_Name>\nex: program_client 127.0.0.1:10000 pi5\n";
     return 1;
   }
 
   absl::ParseCommandLine(argc, argv);
 
-  std::string target_str = absl::GetFlag(FLAGS_target);
-
-  VideoStreamer video_streamer(target_str,argv[1]);
+  VideoStreamer video_streamer(std::string(argv[1]), argv[2]);
   video_streamer.StreamVideo();
 
   return 0;
