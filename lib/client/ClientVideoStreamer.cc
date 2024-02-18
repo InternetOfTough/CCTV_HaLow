@@ -37,7 +37,7 @@ void VideoStreamer::StreamVideo()
     }
 
     // Send frame to server
-    // streaming::EmptyMessage response;
+    // streaming::ServerMessage response;
     // ClientContext context;
     unique_ptr<grpc::ClientWriter<Frame>> writer(stub_->StreamVideo(&context, &response).release());
 

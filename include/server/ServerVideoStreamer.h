@@ -11,7 +11,7 @@ using grpc::ServerBuilder;
 using grpc::ServerContext;
 using grpc::ServerReader;
 using grpc::Status;
-using streaming::EmptyMessage;
+using streaming::ServerMessage;
 using streaming::Frame;
 using streaming::Streaming;
 
@@ -20,9 +20,9 @@ using namespace std;
 class VideoStreamingImpl final : public Streaming::Service
 {
 public:
-  Status streamVideo(ServerContext *context, ServerReader<Frame> *reader, EmptyMessage *response) override;
-  // Status StreamVideo(ServerContext *context, const Frame *request, Frame *response) override;
-  // virtual ::grpc::Status StreamVideo(::grpc::ServerContext *context, ::grpc::ServerReader<::streaming::Frame> *reader, ::streaming::EmptyMessage *response);
+  Status streamVideo(ServerContext *context, ServerReader<Frame> *reader, ServerMessage *response) override;
+    // Status streamVideo(ServerContext* context, ServerReaderWriter< ServerMessage, Frame>* stream) override;
+
   void updateM3u8(unsigned int indexName, string *piName);
 
 private:

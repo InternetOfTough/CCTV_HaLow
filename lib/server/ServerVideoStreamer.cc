@@ -18,7 +18,7 @@ using streaming::Streaming;
 using namespace ::cv;
 using namespace ::std;
 
-Status VideoStreamingImpl::streamVideo(ServerContext *context, ServerReader<Frame> *reader, EmptyMessage *response)
+Status VideoStreamingImpl::streamVideo(ServerContext *context, ServerReader<Frame> *reader, ServerMessage *response)
 {
   // JPG로 압축해서 영상 전송!
   // Frame frame;

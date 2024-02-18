@@ -9,7 +9,7 @@
 // using namespace std;
 
 // set server ip addr and port num for grpc
-ABSL_FLAG(std::string, target, "172.30.1.27:10001", "Server address");
+ABSL_FLAG(std::string, target, "172.30.1.27:10000", "Server address");
 
 
 int main(int argc, char **argv)

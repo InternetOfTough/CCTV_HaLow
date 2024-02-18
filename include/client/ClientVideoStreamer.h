@@ -33,7 +33,7 @@ public:
 private:
   unique_ptr<Streaming::Stub> stub_;
   const string pi_name_;
-  streaming::EmptyMessage response;
+  streaming::ServerMessage response;
   ClientContext context;
   // 파일이름 생성
   unsigned int nameIndex = 1;

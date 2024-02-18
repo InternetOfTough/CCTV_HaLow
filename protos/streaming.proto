@@ -6,7 +6,8 @@ option java_outer_classname = "StreamingProto";
 
 package streaming;
 
-message EmptyMessage {
+message ServerMessage {
+    string msg = 1;
 }
 
 // The request message containing video chunk and pi status.
@@ -17,5 +18,5 @@ message Frame {
 }
 
 service Streaming {
-    rpc streamVideo(stream Frame) returns (EmptyMessage);
+    rpc streamVideo(stream Frame) returns (ServerMessage);
 }
