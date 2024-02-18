@@ -90,21 +90,39 @@ make -j4
 - cmake FetchContent를 이용해 build 디렉토리안에 gRPC를 포함한 필요 라이브러리들이 설치되며 오브젝트파일의 링킹 작업이 실행됩니다. 
 - cmake .. 와 make -j4는 따로따로 실행해주세요(두 과정 모두 처음 실행시 오래 걸립니다.... 다른거 할거를 준비해주시고 시작하시는게 좋습니다....)
 - 프로젝트 빌드를 cmake로 자동화하긴 했지만 저도 이부분은 만들면서 수많은 에러와 삽질을 했기 때문에 제발 에러가 안났으면 좋겠지만 에러가 난다면... 바로 연락주시면 됩니다.
+
+- `could not find openssl` 에러 나오신 분은 os에 기본적으로 openssl 라이브러리가 안깔려서 나오는것이니 아래의 명령어를 통해 openssl lib를 깔아주세요.
+
+```
+sudo apt-get update
+sudo apt-get install libssl-dev
+```
+
+
 ## 실행
 
 - 빌드가 무사히 완료되었다면 /project_root/build/bin 폴더로 이동합니다.
 
 ### 서버 실행
 ```
-./program_server
+./program_server <Port>
 ```
 ### 클라이언트 실행
 ```
-./program_client
+./program_client <Ip:Port> <Pi_Name>
 ```
-- /project_root/lib/server에 위치한 browser.html을 크롬같은 웹브라우저로 실행하시면 웹브라우저에서 영상을 볼 수 있습니다.
+### ~~웹소켓을 이용한 jpg 방식의 실시간 영상 플레이~~
+- ~~/project_root/lib/server에 위치한 browser.html을 크롬같은 웹브라우저로 실행하시면 웹브라우저에서 영상을 볼 수 있습니다.~~
 
 ![Alt text](<2024-01-24 223841.png>)
+
+
+### ffmpeg + HLS를 이용한 실시간 영상 플레이
+- /project_root/lib/server에 위치한 hlsjs.html을 크롬같은 웹브라우저로 실행하시면 웹브라우저에서 영상을 볼 수 있습니다.
+
+![alt text](image.png)
+
+- hlsjs.html에서 c++서버가 돌아가고 있는 주소로 바꿔주세요.
 
 ## Reference
 
