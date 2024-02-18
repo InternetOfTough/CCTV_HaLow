@@ -20,7 +20,7 @@ public:
 
     ~MemoryVideoWriter();
 
-    void reset(int fps);
+    void reset(int fps, uint8_t *buffer);
 
     void WriteFrame(const cv::Mat &frame);
 

@@ -102,7 +102,7 @@ void MemoryVideoWriter ::initialize()
     video_stream_->time_base = {1, fps_};
     video_stream_->r_frame_rate = {fps_, 1};
 
-    //set buffer for encoding
+    // set buffer for encoding
     format_ctx_->pb = avio_ctx_;
 
     // Write file header
@@ -112,8 +112,9 @@ void MemoryVideoWriter ::initialize()
         exit(1);
     }
 }
-void MemoryVideoWriter ::reset(int fps)
+void MemoryVideoWriter ::reset(int fps, uint8_t *buffer)
 {
+    delete (buffer);
     avformat_free_context(format_ctx_);
     avcodec_free_context(&codec_ctx_);
     av_dict_free(&codec_options);
@@ -234,7 +235,7 @@ void MemoryVideoWriter ::encodeVideoFrame(AVFrame *av_frame)
         pkt->duration = 1; // 1 = time_base(1/fps)만큼 패킷 지속
         av_packet_rescale_ts(pkt, codec_ctx_->time_base, video_stream_->time_base);
         av_log(NULL, AV_LOG_DEBUG, "Muxing frame\n");
-      
+
         // Write packet to memory buffer
         // av_interleaved_write_frame(format_ctx_,pkt);
         // avio_write(avio_ctx_, pkt->data, pkt->size);

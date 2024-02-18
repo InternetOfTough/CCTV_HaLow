@@ -4,7 +4,7 @@
 
 
 
-bool createDirectoryIfNotExists(const std::string &path);
+bool createDirectoryIfNotExists(const std::string &path,std::string *piName);
 
 bool writeMsgToFile( std::string *content, const std::string &filePath);
 

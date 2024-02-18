@@ -3,13 +3,14 @@
 #include "directoryAPI.h"
 namespace fs = std::filesystem;
 
-bool createDirectoryIfNotExists(const std::string &path)
+bool createDirectoryIfNotExists(const std::string &path, std::string *piName)
 {
+    std::string fullPath = path + (*piName);
     try
     {
-        if (!fs::exists(path))
+        if (!fs::exists(fullPath))
         {
-            fs::create_directories(path);
+            fs::create_directories(fullPath);
         }
         return true;
     }
@@ -20,12 +21,12 @@ bool createDirectoryIfNotExists(const std::string &path)
     }
 }
 
-bool writeMsgToFile( std::string *content, const std::string &filePath)
+bool writeMsgToFile(std::string *content, const std::string &filePath)
 {
     try
     {
         std::ofstream file(filePath, std::ios::binary | std::ios::trunc);
-        if (file.is_open())
+        if (file.is_open() && content != nullptr)
         {
             file << *content;
             file.close();
@@ -33,6 +34,7 @@ bool writeMsgToFile( std::string *content, const std::string &filePath)
         }
         else
         {
+            file.close();
             std::cerr << "Error opening file for writing" << std::endl;
             return false;
         }
@@ -42,4 +44,6 @@ bool writeMsgToFile( std::string *content, const std::string &filePath)
         std::cerr << "Error writing content to file: " << e.what() << std::endl;
         return false;
     }
+    if (content != nullptr)
+        delete content;
 }

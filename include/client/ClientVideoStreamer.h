@@ -22,22 +22,24 @@ using namespace std;
 class VideoStreamer
 {
 public:
-  VideoStreamer(const std::string &server_address);
+  VideoStreamer(const string &server_address, char *pi_name);
   ~VideoStreamer();
   void StreamVideo();
-  void readFile(std::string &filePath, std::vector<char> &buffer);
+  void readFile(string &filePath, std::vector<char> &buffer);
   void encodeToFile(unique_ptr<grpc::ClientWriter<Frame>> &writer, VideoWriter &out);
   void encodeToMemory(unique_ptr<grpc::ClientWriter<Frame>> &writer);
+  string checkPiStatus();
 
 private:
-  std::unique_ptr<Streaming::Stub> stub_;
+  unique_ptr<Streaming::Stub> stub_;
+  const string pi_name_;
   streaming::EmptyMessage response;
   ClientContext context;
   // 파일이름 생성
   unsigned int nameIndex = 1;
   // const string firstName("1.mp4");
-  const std::string fileType = ".mp4";
-  std::string outputFileName ="";
+  const string kFileType = ".mp4";
+  string outputFileName = "";
   MemoryVideoWriter *memoryVideoWriter = nullptr;
 
   // 시작 시간 기록
