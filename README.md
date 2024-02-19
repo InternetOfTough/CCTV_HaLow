@@ -114,15 +114,26 @@ sudo apt-get install libssl-dev
 ### ~~웹소켓을 이용한 jpg 방식의 실시간 영상 플레이~~
 - ~~/project_root/lib/server에 위치한 browser.html을 크롬같은 웹브라우저로 실행하시면 웹브라우저에서 영상을 볼 수 있습니다.~~
 
-![Alt text](<2024-01-24 223841.png>)
+![Alt text](<./img/2024-01-24 223841.png>)
 
 
 ### ffmpeg + HLS를 이용한 실시간 영상 플레이
 - /project_root/lib/server에 위치한 hlsjs.html을 크롬같은 웹브라우저로 실행하시면 웹브라우저에서 영상을 볼 수 있습니다.
 
-![alt text](image.png)
 
 - hlsjs.html에서 c++서버가 돌아가고 있는 주소로 바꿔주세요.
+
+![alt text](./img/image.png)
+
+- `./lib/server/ServerStartAPI.cc` 파일에서 아래 그림에 절대 경로를 실제 개발환경에 맞게 바꿔줘야 하며 `pi5`대신 client 실행시 cmd 인자로 입력했던 pi 이름을 넣어줘야합니다. 
+
+- `/home/kho/cpp/cctv/CCTV_HaLow/video/<파이 이름>/output.m3u8`
+
+
+![alt text](./img/image-1.png)
+
+![alt text](./img/image-3.png)
+
 
 ## Reference
 
@@ -130,3 +141,5 @@ sudo apt-get install libssl-dev
 - [우분투에 opencv설치](https://roytravel.tistory.com/383)
 - [라즈베리 파이(os)에 opencv 설치](https://make.e4ds.com/make/learn_guide_view.asp?idx=116)
 - [gRPC C++ docs](https://grpc.io/docs/languages/cpp/quickstart/)
+
+- [hls기반 http c++ 서버 구축을 위해 사용한 httplib.h](https://github.com/yhirose/cpp-httplib/blob/master/httplib.h)

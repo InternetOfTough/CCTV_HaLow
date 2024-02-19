@@ -26,7 +26,7 @@ void runServerHLS(const std::string &address, int port)
   server.Get("/output.m3u8", [](const httplib::Request &req, httplib::Response &res)
              {
         // HLS 스트리밍 파일에 대한 경로
-        std::string hlsFilePath = "/home/kho/cpp/cctv/CCTV_HaLow/video//pi5/output.m3u8";
+        std::string hlsFilePath = "/home/kho/cpp/cctv/CCTV_HaLow/video/pi5/output.m3u8";
 
         // 파일을 읽어와서 응답으로 전송
         std::ifstream file(hlsFilePath);
