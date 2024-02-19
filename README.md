@@ -143,3 +143,5 @@ sudo apt-get install libssl-dev
 - [gRPC C++ docs](https://grpc.io/docs/languages/cpp/quickstart/)
 
 - [hls기반 http c++ 서버 구축을 위해 사용한 httplib.h](https://github.com/yhirose/cpp-httplib/blob/master/httplib.h)
+
+- [hlsjs.html](https://github.com/unknownpgr/node-webcam-streaming/blob/master/public/index.html)
