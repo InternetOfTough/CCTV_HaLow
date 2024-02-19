@@ -13,7 +13,7 @@ using namespace ::std;
 
 Status VideoStreamingImpl::streamVideo(ServerContext *context, ServerReader<Frame> *reader, ServerMessage *response)
 {
-  // JPG로 압축해서 영상 전송!
+  // // JPG로 압축해서 영상 전송!
   // Frame frame;
   // while (reader->Read(&frame))
   // {

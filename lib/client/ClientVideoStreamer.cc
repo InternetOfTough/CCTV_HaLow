@@ -17,70 +17,68 @@ VideoStreamer::~VideoStreamer()
 void VideoStreamer::StreamVideo()
 {
 
-  /*   jpg로 압축해서 전송!!
-    Mat frame;
-    //--- INITIALIZE VIDEOCAPTURE
-    VideoCapture cap;
-    // open the default camera using default API
-    // cap.open(0);
-    // OR advance usage: select any API backend
-    // int deviceID = 0;        // 0 = open default camera
-    // int apiID = cv::CAP_ANY; // 0 = autodetect default API
-    // open selected camera using selected API
-    // cap.open(deviceID, apiID);
-    cap.open(-1);
-    // check if we succeeded
-    if (!cap.isOpened())
-    {
-      cerr << "ERROR! Unable to open camera\n";
-      exit(1);
-    }
+  // // jpg로 압축해서 전송!!
+  // Mat frame;
+  // //--- INITIALIZE VIDEOCAPTURE
+  // VideoCapture cap;
+  // // open the default camera using default API
+  // // cap.open(0);
+  // // OR advance usage: select any API backend
+  // // int deviceID = 0;        // 0 = open default camera
+  // // int apiID = cv::CAP_ANY; // 0 = autodetect default API
+  // // open selected camera using selected API
+  // // cap.open(deviceID, apiID);
+  // cap.open(-1);
+  // // check if we succeeded
+  // if (!cap.isOpened())
+  // {
+  //   cerr << "ERROR! Unable to open camera\n";
+  //   exit(1);
+  // }
 
-    // Send frame to server
-    // streaming::ServerMessage response;
-    // ClientContext context;
-    unique_ptr<grpc::ClientWriter<Frame>> writer(stub_->StreamVideo(&context, &response).release());
+  // // Send frame to server
+  // // streaming::ServerMessage response;
+  // // ClientContext context;
+  // unique_ptr<grpc::ClientWriter<Frame>> writer(stub_->streamVideo(&context, &response).release());
 
-    while (cap.read(frame))
-    {
+  // while (cap.read(frame))
+  // {
 
-      // // check if we succeeded
-      if (frame.empty())
-      {
-        cerr << "ERROR! blank frame grabbed\n";
-        break;
-      }
+  //   // // check if we succeeded
+  //   if (frame.empty())
+  //   {
+  //     cerr << "ERROR! blank frame grabbed\n";
+  //     break;
+  //   }
 
+  //   // Convert OpenCV Mat to gRPC Frame message
+  //   Frame frame_message;
+  //   vector<uchar> buffer;
+  //   cv::imencode(".jpg", frame, buffer); // cv::Mat을 바이트 배열로 변환
 
-      // Convert OpenCV Mat to gRPC Frame message
-      Frame frame_message;
-      vector<uchar> buffer;
-      cv::imencode(".jpg", frame, buffer); // cv::Mat을 바이트 배열로 변환
+  //   context.set_compression_algorithm(GRPC_COMPRESS_DEFLATE);
+  //   // Set the buffer to the frame message
+  //   frame_message.mutable_data()->assign(buffer.begin(), buffer.end());
 
-      // Set the buffer to the frame message
-      frame_message.mutable_data()->assign(buffer.begin(), buffer.end());
+  //   // Send frame to server
+  //   writer->Write(frame_message);
 
-      // Send frame to server
-      writer->Write(frame_message);
+  //   // imshow("Camera Stream", frame);
+  //   // if (waitKey(1) == 27) // Break the loop on ESC key press
+  //   // break;
+  // }
 
-      // imshow("Camera Stream", frame);
-      // if (waitKey(1) == 27) // Break the loop on ESC key press
-        // break;
-    }
+  // // 클라이언트의 스트리밍 완료
+  // writer->WritesDone();
+  // Status status = writer->Finish();
 
-    // 클라이언트의 스트리밍 완료
-    writer->WritesDone();
-    Status status = writer->Finish();
-
-    if (!status.ok())
-    {
-      cerr << "Error streaming video: " << status.error_message() << endl;
-    }
-    // Release the VideoCapture and close OpenCV window
-    cap.release();
-    destroyAllWindows();
-
-    */
+  // if (!status.ok())
+  // {
+  //   cerr << "Error streaming video: " << status.error_message() << endl;
+  // }
+  // // Release the VideoCapture and close OpenCV window
+  // cap.release();
+  // destroyAllWindows();
 
   // mp4로 압축해서 전송!!
 

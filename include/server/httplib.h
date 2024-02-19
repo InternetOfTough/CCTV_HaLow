@@ -8,7 +8,7 @@
 #ifndef CPPHTTPLIB_HTTPLIB_H
 #define CPPHTTPLIB_HTTPLIB_H
 
-#define CPPHTTPLIB_VERSION "0.15.1"
+#define CPPHTTPLIB_VERSION "0.15.3"
 
 /*
  * Configuration
@@ -462,7 +462,7 @@ public:
   std::ostream os;
 
 private:
-  class data_sink_streambuf : public std::streambuf {
+  class data_sink_streambuf final : public std::streambuf {
   public:
     explicit data_sink_streambuf(DataSink &sink) : sink_(sink) {}
 
@@ -663,7 +663,7 @@ public:
   virtual void on_idle() {}
 };
 
-class ThreadPool : public TaskQueue {
+class ThreadPool final : public TaskQueue {
 public:
   explicit ThreadPool(size_t n, size_t mqr = 0)
       : shutdown_(false), max_queued_requests_(mqr) {
@@ -780,7 +780,7 @@ public:
  * the resulting capture will be
  * {{"capture", "1"}, {"second_capture", "2"}}
  */
-class PathParamsMatcher : public MatcherBase {
+class PathParamsMatcher final : public MatcherBase {
 public:
   PathParamsMatcher(const std::string &pattern);
 
@@ -810,7 +810,7 @@ private:
  * This means that wildcard patterns may match multiple path segments with /:
  * "/begin/(.*)/end" will match both "/begin/middle/end" and "/begin/1/2/end".
  */
-class RegexMatcher : public MatcherBase {
+class RegexMatcher final : public MatcherBase {
 public:
   RegexMatcher(const std::string &pattern) : regex_(pattern) {}
 
@@ -961,7 +961,7 @@ private:
   bool parse_request_line(const char *s, Request &req) const;
   void apply_ranges(const Request &req, Response &res,
                     std::string &content_type, std::string &boundary) const;
-  bool write_response(Stream &strm, bool close_connection, const Request &req,
+  bool write_response(Stream &strm, bool close_connection, Request &req,
                       Response &res);
   bool write_response_with_content(Stream &strm, bool close_connection,
                                    const Request &req, Response &res);
@@ -1737,7 +1737,7 @@ private:
   std::mutex ctx_mutex_;
 };
 
-class SSLClient : public ClientImpl {
+class SSLClient final : public ClientImpl {
 public:
   explicit SSLClient(const std::string &host);
 
@@ -2126,7 +2126,7 @@ enum class EncodingType { None = 0, Gzip, Brotli };
 
 EncodingType encoding_type(const Request &req, const Response &res);
 
-class BufferStream : public Stream {
+class BufferStream final : public Stream {
 public:
   BufferStream() = default;
   ~BufferStream() override = default;
@@ -2166,7 +2166,7 @@ public:
                           Callback callback) = 0;
 };
 
-class nocompressor : public compressor {
+class nocompressor final : public compressor {
 public:
   ~nocompressor() override = default;
 
@@ -2175,7 +2175,7 @@ public:
 };
 
 #ifdef CPPHTTPLIB_ZLIB_SUPPORT
-class gzip_compressor : public compressor {
+class gzip_compressor final : public compressor {
 public:
   gzip_compressor();
   ~gzip_compressor() override;
@@ -2188,7 +2188,7 @@ private:
   z_stream strm_;
 };
 
-class gzip_decompressor : public decompressor {
+class gzip_decompressor final : public decompressor {
 public:
   gzip_decompressor();
   ~gzip_decompressor() override;
@@ -2205,7 +2205,7 @@ private:
 #endif
 
 #ifdef CPPHTTPLIB_BROTLI_SUPPORT
-class brotli_compressor : public compressor {
+class brotli_compressor final : public compressor {
 public:
   brotli_compressor();
   ~brotli_compressor();
@@ -2217,7 +2217,7 @@ private:
   BrotliEncoderState *state_ = nullptr;
 };
 
-class brotli_decompressor : public decompressor {
+class brotli_decompressor final : public decompressor {
 public:
   brotli_decompressor();
   ~brotli_decompressor();
@@ -2417,7 +2417,11 @@ inline bool is_valid_path(const std::string &path) {
     // Read component
     auto beg = i;
     while (i < path.size() && path[i] != '/') {
-      if (path[i] == '\0') { return false; }
+      if (path[i] == '\0') {
+        return false;
+      } else if (path[i] == '\\') {
+        return false;
+      }
       i++;
     }
 
@@ -2682,21 +2686,29 @@ inline bool mmap::open(const char *path) {
   close();
 
 #if defined(_WIN32)
-  hFile_ = ::CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL,
-                         OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+  std::wstring wpath;
+  for (size_t i = 0; i < strlen(path); i++) {
+    wpath += path[i];
+  }
+
+  hFile_ = ::CreateFile2(wpath.c_str(), GENERIC_READ, FILE_SHARE_READ,
+                         OPEN_EXISTING, NULL);
 
   if (hFile_ == INVALID_HANDLE_VALUE) { return false; }
 
-  size_ = ::GetFileSize(hFile_, NULL);
+  LARGE_INTEGER size{};
+  if (!::GetFileSizeEx(hFile_, &size)) { return false; }
+  size_ = static_cast<size_t>(size.QuadPart);
 
-  hMapping_ = ::CreateFileMapping(hFile_, NULL, PAGE_READONLY, 0, 0, NULL);
+  hMapping_ = ::CreateFileMappingFromApp(hFile_, NULL, PAGE_READONLY, size_,
+                                         NULL);
 
   if (hMapping_ == NULL) {
     close();
     return false;
   }
 
-  addr_ = ::MapViewOfFile(hMapping_, FILE_MAP_READ, 0, 0, 0);
+  addr_ = ::MapViewOfFileFromApp(hMapping_, FILE_MAP_READ, 0, 0);
 #else
   fd_ = ::open(path, O_RDONLY);
   if (fd_ == -1) { return false; }
@@ -2760,7 +2772,7 @@ inline int close_socket(socket_t sock) {
 #ifdef _WIN32
   return closesocket(sock);
 #else
-  return ::close(sock);
+  return close(sock);
 #endif
 }
 
@@ -2923,7 +2935,7 @@ inline bool is_socket_alive(socket_t sock) {
   return detail::read_socket(sock, &buf[0], sizeof(buf), MSG_PEEK) > 0;
 }
 
-class SocketStream : public Stream {
+class SocketStream final : public Stream {
 public:
   SocketStream(socket_t sock, time_t read_timeout_sec, time_t read_timeout_usec,
                time_t write_timeout_sec, time_t write_timeout_usec);
@@ -2952,7 +2964,7 @@ private:
 };
 
 #ifdef CPPHTTPLIB_OPENSSL_SUPPORT
-class SSLSocketStream : public Stream {
+class SSLSocketStream final : public Stream {
 public:
   SSLSocketStream(socket_t sock, SSL *ssl, time_t read_timeout_sec,
                   time_t read_timeout_usec, time_t write_timeout_sec,
@@ -4724,21 +4736,21 @@ serialize_multipart_formdata(const MultipartFormDataItems &items,
   return body;
 }
 
-inline bool normalize_ranges(Request &req, Response &res) {
-  ssize_t contant_len = static_cast<ssize_t>(
-      res.content_length_ ? res.content_length_ : res.body.size());
+inline bool range_error(Request &req, Response &res) {
+  if (!req.ranges.empty() && 200 <= res.status && res.status < 300) {
+    ssize_t contant_len = static_cast<ssize_t>(
+        res.content_length_ ? res.content_length_ : res.body.size());
 
-  ssize_t prev_first_pos = -1;
-  ssize_t prev_last_pos = -1;
-  size_t overwrapping_count = 0;
+    ssize_t prev_first_pos = -1;
+    ssize_t prev_last_pos = -1;
+    size_t overwrapping_count = 0;
 
-  if (!req.ranges.empty()) {
     // NOTE: The following Range check is based on '14.2. Range' in RFC 9110
     // 'HTTP Semantics' to avoid potential denial-of-service attacks.
     // https://www.rfc-editor.org/rfc/rfc9110#section-14.2
 
     // Too many ranges
-    if (req.ranges.size() > CPPHTTPLIB_RANGE_MAX_COUNT) { return false; }
+    if (req.ranges.size() > CPPHTTPLIB_RANGE_MAX_COUNT) { return true; }
 
     for (auto &r : req.ranges) {
       auto &first_pos = r.first;
@@ -4759,16 +4771,16 @@ inline bool normalize_ranges(Request &req, Response &res) {
       // Range must be within content length
       if (!(0 <= first_pos && first_pos <= last_pos &&
             last_pos <= contant_len - 1)) {
-        return false;
+        return true;
       }
 
       // Ranges must be in ascending order
-      if (first_pos <= prev_first_pos) { return false; }
+      if (first_pos <= prev_first_pos) { return true; }
 
       // Request must not have more than two overlapping ranges
       if (first_pos <= prev_last_pos) {
         overwrapping_count++;
-        if (overwrapping_count > 2) { return false; }
+        if (overwrapping_count > 2) { return true; }
       }
 
       prev_first_pos = (std::max)(prev_first_pos, first_pos);
@@ -4776,7 +4788,7 @@ inline bool normalize_ranges(Request &req, Response &res) {
     }
   }
 
-  return true;
+  return false;
 }
 
 inline std::pair<size_t, size_t>
@@ -5983,7 +5995,10 @@ inline bool Server::parse_request_line(const char *s, Request &req) const {
 }
 
 inline bool Server::write_response(Stream &strm, bool close_connection,
-                                   const Request &req, Response &res) {
+                                   Request &req, Response &res) {
+  // NOTE: `req.ranges` should be empty, otherwise it will be applied
+  // incorrectly to the error content.
+  req.ranges.clear();
   return write_response_core(strm, close_connection, req, res, false);
 }
 
@@ -6690,7 +6705,7 @@ Server::process_request(Stream &strm, bool close_connection,
     }
   }
 
-  // Rounting
+  // Routing
   auto routed = false;
 #ifdef CPPHTTPLIB_NO_EXCEPTIONS
   routed = routing(req, res, strm);
@@ -6727,21 +6742,23 @@ Server::process_request(Stream &strm, bool close_connection,
   }
 #endif
   if (routed) {
-    if (detail::normalize_ranges(req, res)) {
-      if (res.status == -1) {
-        res.status = req.ranges.empty() ? StatusCode::OK_200
-                                        : StatusCode::PartialContent_206;
-      }
-      return write_response_with_content(strm, close_connection, req, res);
-    } else {
+    if (res.status == -1) {
+      res.status = req.ranges.empty() ? StatusCode::OK_200
+                                      : StatusCode::PartialContent_206;
+    }
+
+    if (detail::range_error(req, res)) {
       res.body.clear();
       res.content_length_ = 0;
       res.content_provider_ = nullptr;
       res.status = StatusCode::RangeNotSatisfiable_416;
       return write_response(strm, close_connection, req, res);
     }
+
+    return write_response_with_content(strm, close_connection, req, res);
   } else {
     if (res.status == -1) { res.status = StatusCode::NotFound_404; }
+
     return write_response(strm, close_connection, req, res);
   }
 }
