@@ -52,7 +52,7 @@ private:
   MemoryVideoWriter *memory_video_writer_ = nullptr;
 
   // 시간 기록
-  const int kDurationSeconds = 10; // 영상 찍는 시간
+  const int kDurationSeconds = 5; // 영상 찍는 시간
   int64 start_tick_count_;
 
   // frame 개수 계산

@@ -121,22 +121,26 @@ sudo apt-get install libssl-dev
 - /project_root/lib/server에 위치한 hlsjs.html을 크롬같은 웹브라우저로 실행하시면 웹브라우저에서 영상을 볼 수 있습니다.
 
 
-- hlsjs.html에서 c++서버가 돌아가고 있는 주소로 바꿔주세요.
-
-![alt text](./img/image.png)
-
-- `./lib/server/ServerStartAPI.cc` 파일에서 아래 그림에 절대 경로를 실제 개발환경에 맞게 바꿔줘야 하며 `pi5`대신 client 실행시 cmd 인자로 입력했던 pi 이름을 넣어줘야합니다. 
+- `./lib/server/ServerStartAPI.cc` 파일에서 아래 함수들의 절대 경로를 실제 개발환경에 맞게 바꿔줘야 하며 코드에 있는 `pi5`는 모두 client 실행시 cmd 인자로 입력했던 pi 이름으로 바꿔줘야합니다.(vsc 사용시 ctrl + h 추천) 
 
 - `/home/kho/cpp/cctv/CCTV_HaLow/video/<파이 이름>/output.m3u8`
-
 
 ![alt text](./img/image-1.png)
 
 ![alt text](./img/image-3.png)
 
+- 만약 여러대의 cctv를 테스트 하시려면 위의 두 함수를 cctv 개수만큼 복사하시고 동적으로 pi 이름을 할당하시면 됩니다. 
+
 - `./lib/server/ServerStartAPI.cc` 파일에서  맨아래 `listen()`에 c++ http 서버의 주소를 적어줍니다. 
 
 ![alt text](./img/image-6.png)
+
+- hlsjs.html에서 c++서버가 돌아가고 있는 주소를 입력해주시고 `pi5`를 입력한 pi이름 으로 바꿔주세요.
+
+![alt text](./img/image.png)
+
+- 만약 여러대의 cctv를 테스트 하시려면 html 파일을 cctv 개수만큼 복사하시고 동적으로 pi 이름을 할당하시면 됩니다. 
+
 
 ## Reference
 
