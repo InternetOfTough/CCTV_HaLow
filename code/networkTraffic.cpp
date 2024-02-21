@@ -23,22 +23,19 @@ int main() {
 // 네트워크 트래픽 정보 파싱
 string getNetworkTraffic() {
     string result;
-    string cmd = "ip -s link";
-    /*
-    트래픽 파싱 패턴 설정
-    G1: 인터페이스 번호
-    G2: 인터페이스 이름
-    G3: 수신된 패킷 수
-    G4: 전송된 패킷 수
-    */
-    regex pattern("\\d+:\\s+(\\w+):.*?RX:.*?\\d+.*?TX:.*?\\d+", regex::extended);
+    string cmd = "ip -s -d link show wlan0";
+
+    // 정규식 패턴 설정
+    regex pattern("RX:\\s+bytes\\s+packets\\s+errors\\s+dropped\\s+missed\\s+mcast\\s*(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s*"
+                  ".*"
+                  "TX:\\s+bytes\\s+packets\\s+errors\\s+dropped\\s+carrier\\s+collsns\\s*(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s*");
     // 매칭 객체 선언
     smatch matches;
 
     FILE* pipe = popen(cmd.c_str(), "r");
     if (!pipe) {
         cerr << "popen() failed!" << endl;
-        //return "";
+        return "";
     }
 
     char buffer[128];
@@ -46,15 +43,16 @@ string getNetworkTraffic() {
         if (fgets(buffer, 128, pipe) != nullptr)
             result += buffer;
     }
+    //cout << result << endl;
     pclose(pipe);
 
     string traffic;
     // result에서 패턴과 매칭되는 부분 찾아서 traffic에 추가
-    while (regex_search(result, matches, pattern)) {
-        cout << traffic << endl;
-        traffic += matches[0].str() + "\n";
-        cout << traffic << endl;
-        result = matches.suffix().str();
+    if (regex_search(result, matches, pattern)) {
+        traffic += "RX bytes: " + matches[1].str() + ", packets: " + matches[2].str() + ", errors: " + matches[3].str() +
+		", dropped: " + matches[4].str() + ", missed: " + matches[5].str() + ", mcast: " + matches[6].str() + "\n";
+        traffic += "TX bytes: " + matches[7].str() + ", packets: " + matches[8].str() + ", errors: " + matches[9].str() +
+		", dropped: " + matches[10].str() + ", missed: " + matches[11].str() + ", macast: " + matches[12].str() + "\n";
     }
 
     return traffic;
