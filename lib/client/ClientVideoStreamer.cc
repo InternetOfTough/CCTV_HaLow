@@ -7,17 +7,23 @@ VideoStreamer::VideoStreamer(const string &server_address, char *pi_name)
     : stub_(Streaming::NewStub(grpc::CreateChannel(server_address, grpc::InsecureChannelCredentials()))), pi_name_(pi_name)
 {
   cout << "VideoStreamer instance generated" << endl;
+  grpc_thread_.reset(
+      new thread(bind(&VideoStreamer::GrpcThread, this)));
 }
 
 VideoStreamer::~VideoStreamer()
 {
+  cout << "Shutting down client...." << endl;
   cout << "VideoStreamer instance deleted" << endl;
+  cq_.Shutdown();
+  grpc_thread_->join();
 }
 
 void VideoStreamer::StreamVideo()
+
 {
 
-  // // jpg로 압축해서 전송!!
+  // jpg로 압축해서 전송!!
   // Mat frame;
   // //--- INITIALIZE VIDEOCAPTURE
   // VideoCapture cap;
@@ -37,9 +43,9 @@ void VideoStreamer::StreamVideo()
   // }
 
   // // Send frame to server
-  // // streaming::ServerMessage response;
-  // // ClientContext context;
-  // unique_ptr<grpc::ClientWriter<Frame>> writer(stub_->streamVideo(&context, &response).release());
+  // // streaming::ServerMessage response_;
+  // // ClientContext context_;
+  // unique_ptr<grpc::ClientWriter<Frame>> writer(stub_->streamVideo(&context_, &response_).release());
 
   // while (cap.read(frame))
   // {
@@ -80,7 +86,7 @@ void VideoStreamer::StreamVideo()
   // cap.release();
   // destroyAllWindows();
 
-  // mp4로 압축해서 전송!!
+  // // mp4로 압축해서 전송!!
 
   Mat frame;
   //--- INITIALIZE VIDEOCAPTURE
@@ -94,7 +100,7 @@ void VideoStreamer::StreamVideo()
   }
 
   // setup camera
-  int first_fps = 30;
+  int first_fps = 10;
   cap.set(CAP_PROP_FPS, first_fps);
   frameWidth = static_cast<int>(cap.get(CAP_PROP_FRAME_WIDTH));
   frameHeight = static_cast<int>(cap.get(CAP_PROP_FRAME_HEIGHT));
@@ -114,33 +120,40 @@ void VideoStreamer::StreamVideo()
   // 시작 시간 기록
   // Send mp4 to server
   cout << "\nconnecting....\n";
-  unique_ptr<grpc::ClientWriter<Frame>> writer(stub_->streamVideo(&context, &response).release());
+  // unique_ptr<grpc::ClientAsyncWriter<Frame>> writer(stub_->streamVideo(&context_, &response));
+  unique_ptr<grpc::ClientAsyncWriter<Frame>> writer(stub_->AsyncstreamVideo(&context_, &response_, &cq_,
+                                                                            reinterpret_cast<void *>(Type::CONNECT)));
 
   startTickCount = getTickCount();
+
+  writer->Finish(&status, reinterpret_cast<void *>(Type::FINISH)); // async method to receive server msg(return value)
   while (true)
   {
     cap.read(frame);
-    // check if we succeeded
+
     if (frame.empty())
     {
       cerr << "ERROR! blank frame grabbed\n";
       continue;
     }
 
+    if (is_connected_)
+    {
+      // Write frame to MemoryVideoWriter
+      memoryVideoWriter->WriteFrame(frame);
+      encodeToMemory(writer);
+      frameCount++;
+      continue;
+    }
     // 비디오 작성
-    // out.write(frame);
-    // encodeToFile(writer, out);
-
-    // Write frame to MemoryVideoWriter
-    memoryVideoWriter->WriteFrame(frame);
-    encodeToMemory(writer);
-
+    out.write(frame);
+    encodeToFile(writer, out);
     frameCount++;
+
   }
 
   // 클라이언트의 스트리밍 완료
-  writer->WritesDone();
-  Status status = writer->Finish();
+  writer->WritesDone(reinterpret_cast<void *>(Type::WRITES_DONE));
 
   if (!status.ok())
   {
@@ -150,7 +163,7 @@ void VideoStreamer::StreamVideo()
   cap.release();
   destroyAllWindows();
 }
-void VideoStreamer::encodeToMemory(unique_ptr<grpc::ClientWriter<Frame>> &writer)
+void VideoStreamer::encodeToMemory(unique_ptr<grpc::ClientAsyncWriter<Frame>> &writer)
 {
   // 경과 시간 계산
   double elapsedSeconds = (getTickCount() - startTickCount) / getTickFrequency();
@@ -161,7 +174,7 @@ void VideoStreamer::encodeToMemory(unique_ptr<grpc::ClientWriter<Frame>> &writer
   {
     int64 delayStart = getTickCount();
 
-    Frame frame_message;
+    // Frame frame_message;
     frame_message.set_name(pi_name_);
     frame_message.set_status(checkPiStatus());
 
@@ -172,11 +185,14 @@ void VideoStreamer::encodeToMemory(unique_ptr<grpc::ClientWriter<Frame>> &writer
     frame_message.mutable_data()->assign(reinterpret_cast<const char *>(buffer), memoryVideoWriter->GetMemoryBufferSize());
     cout << "buffer_size " << memoryVideoWriter->GetMemoryBufferSize() << endl;
     // Send mp4 to server
-    if (!writer->Write(frame_message))
-    {
-      cerr << "server disconnected " << endl;
-      exit(1);
-    }
+    // if (!writer->Write(frame_message))
+    // {
+    //   cerr << "server disconnected " << endl;
+    //   exit(1);
+    // }
+
+    writer->Write(frame_message, reinterpret_cast<void *>(Type::WRITE));
+    frame_message.Clear();
 
     memoryVideoWriter->reset(frameCount / durationSeconds, buffer);
 
@@ -187,7 +203,8 @@ void VideoStreamer::encodeToMemory(unique_ptr<grpc::ClientWriter<Frame>> &writer
   }
 }
 
-void VideoStreamer::encodeToFile(unique_ptr<grpc::ClientWriter<Frame>> &writer, VideoWriter &out)
+void VideoStreamer::encodeToFile(unique_ptr<grpc::ClientAsyncWriter<Frame>> &writer, VideoWriter &out)
+// void VideoStreamer::encodeToFile(unique_ptr<grpc::ClientWriter<Frame>> &writer, VideoWriter &out)
 {
   // 경과 시간 계산
   double elapsedSeconds = (getTickCount() - startTickCount) / getTickFrequency();
@@ -200,18 +217,21 @@ void VideoStreamer::encodeToFile(unique_ptr<grpc::ClientWriter<Frame>> &writer, 
     out.release(); // VideoWriter의 release 함수 호출
 
     // Convert OpenCV mp4 to gRPC Frame message
-    Frame frame_message;
+    // Frame frame_message;
     vector<char> buffer;
 
     readFile(outputFileName, buffer);
 
     // Set the buffer to the frame message
     frame_message.mutable_data()->assign(buffer.begin(), buffer.end());
+    frame_message.Clear();
 
-    if (!writer->Write(frame_message))
-    {
-      cerr << "server disconnected " << endl;
-    }
+    // if (!writer->Write(frame_message))
+    // {
+    //   cerr << "server disconnected " << endl;
+    // }
+
+    writer->Write(frame_message, reinterpret_cast<void *>(Type::WRITE));
 
     nameIndex++;
     outputFileName.clear();
@@ -266,4 +286,59 @@ void VideoStreamer::readFile(string &filePath, vector<char> &buffer)
 
   // 파일 닫기
   inputFile.close();
+}
+
+void VideoStreamer::GrpcThread()
+{
+  while (true)
+  {
+    void *got_tag;
+    bool ok = false;
+
+    // blocking until next event occur
+    if (!cq_.Next(&got_tag, &ok))
+    {
+      cerr << "Client stream closed. Quitting" << endl;
+      break;
+    }
+
+    if (ok)
+    {
+      cout << endl
+           << "**** Processing completion queue tag " << got_tag
+           << endl;
+      switch (static_cast<Type>(reinterpret_cast<long>(got_tag)))
+      {
+
+      case Type::WRITE:
+        is_connected_ = true;
+        cout << "Sending video chunk (async)." << endl;
+        break;
+      case Type::CONNECT:
+        cout << "Server connected." << endl;
+        break;
+      case Type::WRITES_DONE:
+        cout << "Server disconnecting." << endl;
+        break;
+      case Type::FINISH:
+        // cout << "Client finish; status = "
+        //           << (finish_status_.ok() ? "ok" : "cancelled")
+        //           << endl;
+        cout << "finish \nresponse:"<<response_.msg()<< endl;
+        context_.TryCancel();
+        cq_.Shutdown();
+        break;
+      default:
+        cerr << "Unexpected tag " << got_tag << endl;
+        GPR_ASSERT(false);
+      }
+      continue;
+    }
+
+    if (!ok && static_cast<Type>(reinterpret_cast<long>(got_tag)) == Type::WRITE)
+    {
+      is_connected_ = false;
+      cout << "write failed. \n video is stored in local storage now." << endl;
+    }
+  }
 }

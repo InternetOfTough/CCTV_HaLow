@@ -76,7 +76,7 @@ void MemoryVideoWriter ::initialize()
     codec_ctx_->pix_fmt = AV_PIX_FMT_YUV420P;
     codec_ctx_->time_base = av_inv_q(dst_fps_);
     codec_ctx_->framerate = dst_fps_;
-    codec_ctx_->gop_size = 3;
+    codec_ctx_->gop_size = 12;
 
     if (format_ctx_->oformat->flags & AVFMT_GLOBALHEADER)
         codec_ctx_->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;

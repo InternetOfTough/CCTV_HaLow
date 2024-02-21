@@ -6,14 +6,12 @@
 #include "WebSockVariable.h"
 #include "directoryAPI.h"
 
-
-
 using namespace ::cv;
 using namespace ::std;
 
 Status VideoStreamingImpl::streamVideo(ServerContext *context, ServerReader<Frame> *reader, ServerMessage *response)
 {
-  // // JPG로 압축해서 영상 전송!
+  // JPG로 압축해서 영상 전송!
   // Frame frame;
   // while (reader->Read(&frame))
   // {
@@ -50,8 +48,9 @@ Status VideoStreamingImpl::streamVideo(ServerContext *context, ServerReader<Fram
   unsigned int nameIndex = 1;
 
   Frame frame;
-  // grpc::ServerAsyncReaderWriter<EmptyMessage, Frame> asyncReader;
-  // asyncReader.Read(&frame, (void *)1);
+  
+  response->set_msg("reboot");
+
   while (reader->Read(&frame))
   {
     string *piName = frame.release_name();
