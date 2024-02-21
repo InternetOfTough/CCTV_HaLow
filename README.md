@@ -134,6 +134,9 @@ sudo apt-get install libssl-dev
 
 ![alt text](./img/image-3.png)
 
+- `./lib/server/ServerStartAPI.cc` 파일에서  맨아래 `listen()`에 c++ http 서버의 주소를 적어줍니다. 
+
+![alt text](./img/image-6.png)
 
 ## Reference
 
