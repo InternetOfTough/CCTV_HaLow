@@ -126,7 +126,7 @@ void VideoStreamer::StreamVideo()
 
   startTickCount = getTickCount();
 
-  writer->Finish(&status, reinterpret_cast<void *>(Type::FINISH)); // async method to receive server msg(return value)
+  // writer->Finish(&status, reinterpret_cast<void *>(Type::FINISH)); // async method to receive server msg(return value)
   while (true)
   {
     cap.read(frame);
@@ -146,10 +146,11 @@ void VideoStreamer::StreamVideo()
       continue;
     }
     // 비디오 작성
-    out.write(frame);
-    encodeToFile(writer, out);
-    frameCount++;
-
+    // out.write(frame);
+    // encodeToFile(writer, out);
+    // frameCount++;
+    cerr << "server disconnected " << endl;
+    exit(1);
   }
 
   // 클라이언트의 스트리밍 완료
@@ -324,7 +325,7 @@ void VideoStreamer::GrpcThread()
         // cout << "Client finish; status = "
         //           << (finish_status_.ok() ? "ok" : "cancelled")
         //           << endl;
-        cout << "finish \nresponse:"<<response_.msg()<< endl;
+        cout << "finish \nresponse:" << response_.msg() << endl;
         context_.TryCancel();
         cq_.Shutdown();
         break;
