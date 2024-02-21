@@ -23,7 +23,7 @@ void RunServerHLS(const std::string &address, int port)
 {
   httplib::Server server;
 
-  server.Get("/output.m3u8", [](const httplib::Request &req, httplib::Response &res)
+  server.Get("/pi5/output.m3u8", [](const httplib::Request &req, httplib::Response &res)
              {
         // HLS 스트리밍 파일에 대한 경로
         std::string hls_file_path = "/home/kho/cpp/cctv/CCTV_HaLow/video/pi5/output.m3u8";
@@ -40,7 +40,7 @@ void RunServerHLS(const std::string &address, int port)
             res.set_content("Not Found", "text/plain");
         } });
 
-  server.Get(R"(/output(\d+).ts)", [](const httplib::Request &req, httplib::Response &res)
+  server.Get(R"(/pi5/output(\d+).ts)", [](const httplib::Request &req, httplib::Response &res)
              {
     // Extract the wildcard part from the URL
     std::string wild_card_part = req.matches[1].str();
