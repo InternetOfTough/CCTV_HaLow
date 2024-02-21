@@ -23,7 +23,7 @@ public:
   Status streamVideo(ServerContext *context, ServerReader<Frame> *reader, ServerMessage *response) override;
     // Status streamVideo(ServerContext* context, ServerReaderWriter< ServerMessage, Frame>* stream) override;
 
-  void updateM3u8(unsigned int indexName, string *piName);
+  void UpdateM3u8(unsigned int index_name, string *pi_name);
 
 private:
   // ffmpeg 명령어를 실행
@@ -39,6 +39,6 @@ private:
 
 void RunServer(uint16_t port);
 
-void runServerHLS(const string &address, int port);
+void RunServerHLS(const string &address, int port);
 
 #endif // VIDEO_STREAMER_H

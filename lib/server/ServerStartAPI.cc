@@ -19,17 +19,17 @@ void RunServer(uint16_t port)
   server->Wait();
 }
 
-void runServerHLS(const std::string &address, int port)
+void RunServerHLS(const std::string &address, int port)
 {
   httplib::Server server;
 
   server.Get("/output.m3u8", [](const httplib::Request &req, httplib::Response &res)
              {
         // HLS 스트리밍 파일에 대한 경로
-        std::string hlsFilePath = "/home/kho/cpp/cctv/CCTV_HaLow/video/pi5/output.m3u8";
+        std::string hls_file_path = "/home/kho/cpp/cctv/CCTV_HaLow/video/pi5/output.m3u8";
 
         // 파일을 읽어와서 응답으로 전송
-        std::ifstream file(hlsFilePath);
+        std::ifstream file(hls_file_path);
         if (file.is_open()) {
             std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
             res.set_content(content, "application/vnd.apple.mpegurl");
@@ -43,14 +43,14 @@ void runServerHLS(const std::string &address, int port)
   server.Get(R"(/output(\d+).ts)", [](const httplib::Request &req, httplib::Response &res)
              {
     // Extract the wildcard part from the URL
-    std::string wildcardPart = req.matches[1].str();
+    std::string wild_card_part = req.matches[1].str();
 
     // Form the complete path with the wildcard part
-    std::string tsFilePath = "/home/kho/cpp/cctv/CCTV_HaLow/video/pi5/output" + wildcardPart + ".ts";
+    std::string ts_file_path = "/home/kho/cpp/cctv/CCTV_HaLow/video/pi5/output" + wild_card_part + ".ts";
 
 
     // 파일을 읽어와서 응답으로 전송
-    std::ifstream file(tsFilePath);
+    std::ifstream file(ts_file_path);
     if (file.is_open()) {
         std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
         res.set_content(content, "video/MP2T");  // .ts 파일의 MIME 타입

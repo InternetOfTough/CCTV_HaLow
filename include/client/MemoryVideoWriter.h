@@ -20,7 +20,7 @@ public:
 
     ~MemoryVideoWriter();
 
-    void reset(int fps, uint8_t *buffer);
+    void Reset(int fps, uint8_t *buffer);
 
     void WriteFrame(const cv::Mat &frame);
 
@@ -30,13 +30,11 @@ public:
     int &GetMemoryBufferSize();
 
 private:
-    void initialize();
-    AVFrame *cvMatToAVFrame(const cv::Mat &frame);
-    void encodeVideoFrame(AVFrame *av_frame);
+    void Initialize();
+    void CvMatToAVFrame(const cv::Mat &frame);
+    void EncodeVideoFrame(AVFrame *av_frame);
 
-    const char *av_err2str_custom(int errnum);
-
-    static inline int WriteCallback(void *opaque, uint8_t *buf, int buf_size);
+    const char *AvErr2strCustom(int errnum);
 
 private:
     int width_;
@@ -50,12 +48,12 @@ private:
     AVCodecContext *codec_ctx_ = nullptr;
     AVStream *video_stream_ = nullptr;
     const AVCodec *codec_enc_ = nullptr;
-    AVDictionary *codec_options = nullptr;
+    AVDictionary *codec_options_ = nullptr;
     AVIOContext *avio_ctx_ = nullptr;
 
-    AVPacket *pkt = av_packet_alloc();
-    AVFrame *av_frame = av_frame_alloc();
-    uint8_t *buffer = nullptr;
+    AVPacket *pkt_ = av_packet_alloc();
+    AVFrame *av_frame_ = av_frame_alloc();
+    uint8_t *buffer_ = nullptr;
     AVRational dst_fps_;
     int buffer_size_ = 0;
 };

@@ -1,6 +1,6 @@
 #include <WebSockVariable.h>
 
-websocket_server serverWeb;
+websocket_server server_web;
 connection_hdl hdl;
-bool isConnected;
+bool is_connected;
 

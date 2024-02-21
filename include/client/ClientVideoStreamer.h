@@ -27,39 +27,38 @@ public:
   VideoStreamer(const string &server_address, char *pi_name);
   ~VideoStreamer();
   void StreamVideo();
-  void readFile(string &filePath, std::vector<char> &buffer);
-  void encodeToFile(unique_ptr<grpc::ClientAsyncWriter<Frame>> &writer, VideoWriter &out);
-  void encodeToMemory(unique_ptr<grpc::ClientAsyncWriter<Frame>> &writer);
-  string checkPiStatus();
+  void ReadFile(string &filePath, std::vector<char> &buffer);
+  void EncodeToFile(unique_ptr<grpc::ClientAsyncWriter<Frame>> &writer, VideoWriter &out);
+  void EncodeToMemory(unique_ptr<grpc::ClientAsyncWriter<Frame>> &writer);
+  string CheckPiStatus();
   void GrpcThread();
 
 private:
-  // The producer-consumer queue we use to communicate asynchronously with the
-  // gRPC runtime.
-    // Thread that notifies the gRPC completion queue tags.
+  //for gRPC
   std::unique_ptr<std::thread> grpc_thread_;
   CompletionQueue cq_;
   unique_ptr<Streaming::Stub> stub_;
   const string pi_name_;
   streaming::ServerMessage response_;
-  Frame frame_message;
+  Frame frame_message_;
   ClientContext context_;
-  Status status;
-  // 파일이름 생성
-  unsigned int nameIndex = 1;
-  // const string firstName("1.mp4");
-  const string kFileType = ".mp4";
-  string outputFileName = "";
-  MemoryVideoWriter *memoryVideoWriter = nullptr;
+  Status status_;
 
-  // 시작 시간 기록
-  const int durationSeconds = 10;
-  int64 startTickCount;
+  // 파일이름 생성
+  unsigned int name_index_ = 1;
+  const string kFileType = ".mp4";
+  string output_file_name_ = "";
+
+  MemoryVideoWriter *memory_video_writer_ = nullptr;
+
+  // 시간 기록
+  const int kDurationSeconds = 10; // 영상 찍는 시간
+  int64 start_tick_count_;
 
   // frame 개수 계산
-  int frameCount = 1;
-  int frameWidth;
-  int frameHeight;
+  int frame_count_ = 1;
+  int frame_width_;
+  int frame_height_;
 
   bool is_connected_ = true;
   

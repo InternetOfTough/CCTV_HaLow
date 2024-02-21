@@ -15,8 +15,8 @@ Status VideoStreamingImpl::streamVideo(ServerContext *context, ServerReader<Fram
   // Frame frame;
   // while (reader->Read(&frame))
   // {
-  //   if (isConnected)
-  //     serverWeb.send(hdl, frame.data(), websocketpp::frame::opcode::binary);
+  //   if (is_connected)
+  //     server_web.send(hdl, frame.data(), websocketpp::frame::opcode::binary);
   //   Mat decoded_frame;
   //   Mat data_mat(1, frame.data().size(), CV_8U, (void *)frame.data().data());
 
@@ -45,7 +45,7 @@ Status VideoStreamingImpl::streamVideo(ServerContext *context, ServerReader<Fram
   // return Status::OK;
 
   // MP4로 압축해서 전송 받음!
-  unsigned int nameIndex = 1;
+  unsigned int index_name = 1;
 
   Frame frame;
   
@@ -53,23 +53,23 @@ Status VideoStreamingImpl::streamVideo(ServerContext *context, ServerReader<Fram
 
   while (reader->Read(&frame))
   {
-    string *piName = frame.release_name();
+    string *pi_name = frame.release_name();
     std::cout << '\n'
-              << *piName << "\n\n";
+              << *pi_name << "\n\n";
 
     string *status = frame.release_status();
     std::cout << '\n'
               << *status << "\n\n";
     // 디렉터리 생성 여부 확인
-    if (createDirectoryIfNotExists(kDirectoryPath, piName))
+    if (CreateDirectoryIfNotExists(kDirectoryPath, pi_name))
     {
       // 디렉터리가 성공적으로 생성되면 파일에 버퍼 내용 쓰기
 
-      const string filePath = kDirectoryPath + *piName + "/" + to_string(nameIndex) + kFileType;
-      if (writeMsgToFile(frame.release_data(), filePath)) // release_data() 메서드는 필드의 값을 반환하는 것이 아니라 해당 필드의 메모리를 해제하고 포인터를 반환
+      const string filePath = kDirectoryPath + *pi_name + "/" + to_string(index_name) + kFileType;
+      if (WriteMsgToFile(frame.release_data(), filePath)) // release_data() 메서드는 필드의 값을 반환하는 것이 아니라 해당 필드의 메모리를 해제하고 포인터를 반환
       {
-        std::cout << "File successfully created: " << nameIndex << ".mp4" << std::endl;
-        updateM3u8(nameIndex, piName);
+        std::cout << "File successfully created: " << index_name << ".mp4" << std::endl;
+        UpdateM3u8(index_name, pi_name);
       }
       else
       {
@@ -80,27 +80,27 @@ Status VideoStreamingImpl::streamVideo(ServerContext *context, ServerReader<Fram
     {
       std::cerr << "Failed to create directory" << std::endl;
     }
-    delete piName;
+    delete pi_name;
     delete status;
-    nameIndex++;
+    index_name++;
     frame.Clear();
   }
 
   return Status::OK;
 }
 
-void VideoStreamingImpl::updateM3u8(unsigned int nameIndex, string *piName)
+void VideoStreamingImpl::UpdateM3u8(unsigned int index_name, string *pi_name)
 {
   int result;
-  if (nameIndex == 1)
+  if (index_name == 1)
   {
-    const string KCommand1 = kFirstCommand + kDirectoryPath + *piName + "/" + to_string(nameIndex) + kAfterCommand1 + *piName + kM38uName;
+    const string KCommand1 = kFirstCommand + kDirectoryPath + *pi_name + "/" + to_string(index_name) + kAfterCommand1 + *pi_name + kM38uName;
 
     result = system(KCommand1.c_str());
   }
   else
   {
-    const string KCommand2 = kFirstCommand + kDirectoryPath + *piName + "/" + to_string(nameIndex) + kAfterCommand2 + *piName + kM38uName;
+    const string KCommand2 = kFirstCommand + kDirectoryPath + *pi_name + "/" + to_string(index_name) + kAfterCommand2 + *pi_name + kM38uName;
     result = system(KCommand2.c_str());
   }
 

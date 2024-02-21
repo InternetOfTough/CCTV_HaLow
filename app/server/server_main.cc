@@ -21,7 +21,7 @@ int main(int argc, char **argv)
     return 1;
   }
 
-  isConnected = false; // for 웹소켓 연결
+  is_connected = false; // for 웹소켓 연결
 
   // Run the gRPC server
   // absl::ParseCommandLine(argc, argv);
@@ -31,31 +31,31 @@ int main(int argc, char **argv)
 
   // // websocket for connection brower
   // //  Set logging
-  //  serverWeb.set_access_channels(websocketpp::log::alevel::all);
-  //  serverWeb.clear_access_channels(websocketpp::log::alevel::frame_payload);
+  //  server_web.set_access_channels(websocketpp::log::alevel::all);
+  //  server_web.clear_access_channels(websocketpp::log::alevel::frame_payload);
 
   // // Define the callback to handle connections
-  // serverWeb.set_open_handler([&](connection_hdl ori_hdl)
+  // server_web.set_open_handler([&](connection_hdl ori_hdl)
   //                            {
   //                              std::cout << "web browser connected" << std::endl;
   //                              hdl = ori_hdl;
-  //                              isConnected = true;
+  //                              is_connected = true;
   //                              // Create a separate thread to send data to the client
   //                              // std::thread(sendData, std::ref(server), hdl).detach();
   //                            });
 
   // // Initialize the server
-  // serverWeb.init_asio();
-  // serverWeb.set_reuse_addr(true);
+  // server_web.init_asio();
+  // server_web.set_reuse_addr(true);
 
   // // Listen on port 9002
-  // serverWeb.listen(9002);
+  // server_web.listen(9002);
 
   // // Start the server accept loop
-  // serverWeb.start_accept();
+  // server_web.start_accept();
 
   // // Start the ASIO io_service run loop
-  // serverWeb.run();
+  // server_web.run();
 
   // HLS 서버
   try
@@ -65,7 +65,7 @@ int main(int argc, char **argv)
     std::string port = "9002";
 
     // 서버 시작
-    runServerHLS(address, 9002);
+    RunServerHLS(address, 9002);
   }
   catch (const std::exception &e)
   {

@@ -4,26 +4,26 @@ MemoryVideoWriter::MemoryVideoWriter(int width, int height, int fps) : width_(wi
 {
     // Initialize FFmpeg network components
     avformat_network_init();
-    initialize();
+    Initialize();
 }
 
 MemoryVideoWriter ::~MemoryVideoWriter()
 {
 
     // Free AVFrame
-    av_frame_free(&av_frame);
+    av_frame_free(&av_frame_);
 
     // Close memory buffer
     // avio_close(format_ctx_->pb);
 
     // Free contexts
-    av_packet_free(&pkt);
+    av_packet_free(&pkt_);
     avformat_free_context(format_ctx_);
     avcodec_free_context(&codec_ctx_);
     // avio_context_free(&avio_ctx_);
 }
 
-void MemoryVideoWriter ::initialize()
+void MemoryVideoWriter ::Initialize()
 {
     // Allocate memory context
     if (avio_open_dyn_buf(&avio_ctx_) < 0)
@@ -82,9 +82,9 @@ void MemoryVideoWriter ::initialize()
         codec_ctx_->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 
     // Set codec parameters for libx264
-    av_dict_set(&codec_options, "preset", "medium", 0); // You can adjust the preset as needed
+    av_dict_set(&codec_options_, "preset", "medium", 0); // You can adjust the preset as needed
 
-    if (avcodec_open2(codec_ctx_, codec_ctx_->codec, &codec_options) < 0)
+    if (avcodec_open2(codec_ctx_, codec_ctx_->codec, &codec_options_) < 0)
     {
         std::cerr << "Failed to open codec" << std::endl;
         exit(1);
@@ -106,40 +106,40 @@ void MemoryVideoWriter ::initialize()
     format_ctx_->pb = avio_ctx_;
 
     // Write file header
-    if (avformat_write_header(format_ctx_, &codec_options) < 0)
+    if (avformat_write_header(format_ctx_, &codec_options_) < 0)
     {
         std::cerr << "Failed to write file header" << std::endl;
         exit(1);
     }
 }
-void MemoryVideoWriter ::reset(int fps, uint8_t *buffer)
+void MemoryVideoWriter ::Reset(int fps, uint8_t *buffer)
 {
     delete (buffer);
     avformat_free_context(format_ctx_);
     avcodec_free_context(&codec_ctx_);
-    av_dict_free(&codec_options);
+    av_dict_free(&codec_options_);
     // avcodec_flush_buffers(codec_ctx_);
     fps_ = fps;
     dst_fps_ = {fps, 1};
     frame_count_ = 0;
     encoded_frame_count_ = 0;
 
-    initialize();
+    Initialize();
 }
 
 void MemoryVideoWriter ::WriteFrame(const cv::Mat &frame)
 {
-    AVFrame *av_frame = cvMatToAVFrame(frame);
+    CvMatToAVFrame(frame);
 
     // Set timestamp
-    av_frame->pts = frame_count_; // 예: 프레임 번호를 사용한 간단한 설정
-    av_frame->pkt_dts = av_frame->pts;
+    av_frame_->pts = frame_count_; // 예: 프레임 번호를 사용한 간단한 설정
+    av_frame_->pkt_dts = av_frame_->pts;
 
     // Encode video frame
-    encodeVideoFrame(av_frame);
+    EncodeVideoFrame(av_frame_);
 
     frame_count_++;
-    // av_frame_unref(av_frame);
+    // av_frame_unref(av_frame_);
 }
 
 uint8_t *MemoryVideoWriter::GetMemoryBuffer()
@@ -147,21 +147,21 @@ uint8_t *MemoryVideoWriter::GetMemoryBuffer()
 
     std::cout << "frame_count: " << frame_count_ << std::endl;
     std::cout << "encoded_frame_count: " << encoded_frame_count_ << std::endl;
-    encodeVideoFrame(NULL);
+    EncodeVideoFrame(NULL);
     std::cout << "frame_count: " << frame_count_ << std::endl;
     std::cout << "encoded_frame_count: " << encoded_frame_count_ << std::endl;
 
     // Write file trailer
     av_write_trailer(format_ctx_);
     // 동적 버퍼 닫기
-    buffer_size_ = avio_close_dyn_buf(avio_ctx_, &buffer);
+    buffer_size_ = avio_close_dyn_buf(avio_ctx_, &buffer_);
     if (buffer_size_ < 0)
     {
         // 오류 처리
         exit(1);
     }
     // avformat_free_context(format_ctx_);
-    return buffer;
+    return buffer_;
 }
 
 int &MemoryVideoWriter::GetMemoryBufferSize() // Create output format context
@@ -169,9 +169,9 @@ int &MemoryVideoWriter::GetMemoryBufferSize() // Create output format context
     return buffer_size_;
 }
 
-AVFrame *MemoryVideoWriter::cvMatToAVFrame(const cv::Mat &frame)
+void MemoryVideoWriter::CvMatToAVFrame(const cv::Mat &frame)
 {
-    av_frame_unref(av_frame);
+    av_frame_unref(av_frame_);
     std::cout << "mat" << std::endl;
     // Set codec parameters for the video stream
     video_stream_->codecpar->format = AV_PIX_FMT_YUV420P;
@@ -179,49 +179,47 @@ AVFrame *MemoryVideoWriter::cvMatToAVFrame(const cv::Mat &frame)
     video_stream_->codecpar->height = frame.rows;
 
     // Set AVFrame parameters
-    av_frame->width = frame.cols;
-    av_frame->height = frame.rows;
-    av_frame->format = AV_PIX_FMT_YUV420P;
+    av_frame_->width = frame.cols;
+    av_frame_->height = frame.rows;
+    av_frame_->format = AV_PIX_FMT_YUV420P;
 
     // Set up buffer for the frame
-    av_frame_get_buffer(av_frame, 32);
+    av_frame_get_buffer(av_frame_, 32);
 
     // Convert BGR to YUV (adjust parameters as needed)
     cv::Mat yuvFrame;
     cv::cvtColor(frame, yuvFrame, cv::COLOR_BGR2YUV_I420);
 
     // Set linesize to the width of the image (Stride)
-    // av_frame->linesize[0] = yuvFrame.step[0]; // Y 플레인의 라인 크기 설정
-    // av_frame->linesize[1] = yuvFrame.step[1]; // U 플레인의 라인 크기 설정
-    // av_frame->linesize[2] = yuvFrame.step[2]; // V 플레인의 라인 크기 설정
+    // av_frame_->linesize[0] = yuvFrame.step[0]; // Y 플레인의 라인 크기 설정
+    // av_frame_->linesize[1] = yuvFrame.step[1]; // U 플레인의 라인 크기 설정
+    // av_frame_->linesize[2] = yuvFrame.step[2]; // V 플레인의 라인 크기 설정
 
     // Copy data from OpenCV Mat to AVFrame
-    memcpy(av_frame->data[0], yuvFrame.data, av_frame->width * av_frame->height);
-    memcpy(av_frame->data[1], yuvFrame.data + av_frame->width * av_frame->height, av_frame->width * av_frame->height / 4);
-    memcpy(av_frame->data[2], yuvFrame.data + av_frame->width * av_frame->height * 5 / 4, av_frame->width * av_frame->height / 4);
-
-    return av_frame;
+    memcpy(av_frame_->data[0], yuvFrame.data, av_frame_->width * av_frame_->height);
+    memcpy(av_frame_->data[1], yuvFrame.data + av_frame_->width * av_frame_->height, av_frame_->width * av_frame_->height / 4);
+    memcpy(av_frame_->data[2], yuvFrame.data + av_frame_->width * av_frame_->height * 5 / 4, av_frame_->width * av_frame_->height / 4);
 }
 
-void MemoryVideoWriter ::encodeVideoFrame(AVFrame *av_frame)
+void MemoryVideoWriter ::EncodeVideoFrame(AVFrame *av_frame)
 {
     int ret;
 
     // Send frame for encoding
     if ((ret = avcodec_send_frame(codec_ctx_, av_frame)) < 0) // 비디오 코덱에게 인코딩해달라고 보냄 (메모리 버퍼에 read write 하는게 x)
     {
-        std::cerr << "Failed to send frame for encoding: " << av_err2str_custom(ret) << std::endl;
+        std::cerr << "Failed to send frame for encoding: " << AvErr2strCustom(ret) << std::endl;
         exit(1);
     }
 
     // Receive encoded packet
     while (ret >= 0)
     {
-        // av_packet_unref(pkt);
+        // av_packet_unref(pkt_);
         // 인코딩된 패킷을 받아오는 함수로, 여러 번 호출되어 더 이상 받아올 패킷이 없을 때 AVERROR(EAGAIN)이 반환
         // AVERROR_EOF:-541478725
         // AVERROR(EAGAIN) : -11
-        ret = avcodec_receive_packet(codec_ctx_, pkt);
+        ret = avcodec_receive_packet(codec_ctx_, pkt_);
         if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
         {
             // Need more data, continue encoding
@@ -229,26 +227,26 @@ void MemoryVideoWriter ::encodeVideoFrame(AVFrame *av_frame)
         }
         if (ret < 0)
         {
-            std::cerr << "Error during encoding: " << av_err2str_custom(ret) << std::endl;
+            std::cerr << "Error during encoding: " << AvErr2strCustom(ret) << std::endl;
             exit(1);
         }
-        pkt->duration = 1; // 1 = time_base(1/fps)만큼 패킷 지속
-        av_packet_rescale_ts(pkt, codec_ctx_->time_base, video_stream_->time_base);
+        pkt_->duration = 1; // 1 = time_base(1/fps)만큼 패킷 지속
+        av_packet_rescale_ts(pkt_, codec_ctx_->time_base, video_stream_->time_base);
         av_log(NULL, AV_LOG_DEBUG, "Muxing frame\n");
 
         // Write packet to memory buffer
-        // av_interleaved_write_frame(format_ctx_,pkt);
-        // avio_write(avio_ctx_, pkt->data, pkt->size);
-        av_write_frame(format_ctx_, pkt);
+        // av_interleaved_write_frame(format_ctx_,pkt_);
+        // avio_write(avio_ctx_, pkt_->data, pkt_->size);
+        av_write_frame(format_ctx_, pkt_);
 
         encoded_frame_count_++;
         std::cout << "done encoding frame!!" << std::endl;
-        // av_packet_unref(pkt);
+        // av_packet_unref(pkt_);
     }
 }
 
 // 사용자 정의 av_err2str 함수
-const char *MemoryVideoWriter ::av_err2str_custom(int errnum)
+const char *MemoryVideoWriter ::AvErr2strCustom(int errnum)
 {
     static char str[AV_ERROR_MAX_STRING_SIZE];
     av_strerror(errnum, str, AV_ERROR_MAX_STRING_SIZE);

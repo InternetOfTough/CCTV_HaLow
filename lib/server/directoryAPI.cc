@@ -3,9 +3,9 @@
 #include "directoryAPI.h"
 namespace fs = std::filesystem;
 
-bool createDirectoryIfNotExists(const std::string &path, std::string *piName)
+bool CreateDirectoryIfNotExists(const std::string &path, std::string *pi_name)
 {
-    std::string fullPath = path + (*piName);
+    std::string fullPath = path + (*pi_name);
     try
     {
         if (!fs::exists(fullPath))
@@ -21,11 +21,11 @@ bool createDirectoryIfNotExists(const std::string &path, std::string *piName)
     }
 }
 
-bool writeMsgToFile(std::string *content, const std::string &filePath)
+bool WriteMsgToFile(std::string *content, const std::string &file_path)
 {
     try
     {
-        std::ofstream file(filePath, std::ios::binary | std::ios::trunc);
+        std::ofstream file(file_path, std::ios::binary | std::ios::trunc);
         if (file.is_open() && content != nullptr)
         {
             file << *content;

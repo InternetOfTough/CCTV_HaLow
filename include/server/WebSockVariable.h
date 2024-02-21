@@ -9,8 +9,8 @@ using namespace websocketpp;
 using websocket_server = websocketpp::server<websocketpp::config::asio>;
 using connection_hdl = websocketpp::connection_hdl;
 
-extern websocket_server serverWeb;
+extern websocket_server server_web;
 extern connection_hdl hdl;
-extern bool isConnected;
+extern bool is_connected;
 
 #endif 
