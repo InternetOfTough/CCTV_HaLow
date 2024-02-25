@@ -102,8 +102,10 @@ void VideoStreamer::StreamVideo()
   // setup camera
   int first_fps = 10;
   cap.set(CAP_PROP_FPS, first_fps);
-  frame_width_ = static_cast<int>(cap.get(CAP_PROP_FRAME_WIDTH));
-  frame_height_ = static_cast<int>(cap.get(CAP_PROP_FRAME_HEIGHT));
+  frame_width_ = static_cast<int>(cap.get(CAP_PROP_FRAME_WIDTH))/2;
+  frame_height_ = static_cast<int>(cap.get(CAP_PROP_FRAME_HEIGHT))/2;
+  cap.set(CAP_PROP_FRAME_WIDTH, frame_width_);
+  cap.set(CAP_PROP_FRAME_HEIGHT, frame_height_);
 
   cout << "Width : " << frame_width_ << endl;
   cout << "Height : " << frame_height_ << endl;
