@@ -26,9 +26,8 @@ int main() {
 int getSignalLevel(const string& interface) {
     string result;
     string cmd = "iwconfig " + interface + " 2>&1";
-    // 신호세기 패턴설정: 음수 존재할 수 있음, 하나 이상의 숫자 존재해야함 
+    
     regex pattern("Tx-Power=(\\d+) dBm");
-    // 패턴과 매칭 결과를 저장할 객체 선언
     smatch matches;
 
     // 리눅스 명령 실행결과를 파일로 읽기위한 파이프 생성

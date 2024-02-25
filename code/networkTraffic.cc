@@ -25,11 +25,9 @@ string getNetworkTraffic() {
     string result;
     string cmd = "ip -s -d link show wlan0";
 
-    // 정규식 패턴 설정
     regex pattern("RX:\\s+bytes\\s+packets\\s+errors\\s+dropped\\s+missed\\s+mcast\\s*(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s*"
                   ".*"
                   "TX:\\s+bytes\\s+packets\\s+errors\\s+dropped\\s+carrier\\s+collsns\\s*(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s*");
-    // 매칭 객체 선언
     smatch matches;
 
     FILE* pipe = popen(cmd.c_str(), "r");
@@ -43,7 +41,6 @@ string getNetworkTraffic() {
         if (fgets(buffer, 128, pipe) != nullptr)
             result += buffer;
     }
-    //cout << result << endl;
     pclose(pipe);
 
     string traffic;
