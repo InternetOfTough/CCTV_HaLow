@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "org.cctv.libs";
+option java_outer_classname = "StreamingProto";
+
+package streaming;
+
+message ServerMessage {
+    string msg = 1;
+}
+
+// The request message containing video chunk and pi status.
+message Frame {
+    bytes data = 1;
+    string name = 2;
+    string status = 3;
+}
+
+service Streaming {
+    rpc streamVideo(stream Frame) returns (ServerMessage);
+}
