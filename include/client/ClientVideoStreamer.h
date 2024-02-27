@@ -31,10 +31,10 @@ public:
   void EncodeToFile(unique_ptr<grpc::ClientAsyncWriter<Frame>> &writer, VideoWriter &out);
   void EncodeToMemory(unique_ptr<grpc::ClientAsyncWriter<Frame>> &writer);
   string CheckPiStatus();
-  string executeCommand(const string& command);
+  string executeCommand(const char* command);
   string getSignalLevel();
   string getNetworkTraffic();
-  bool getCamera();
+  string getCamera();
   void GrpcThread();
 
 private:
@@ -54,9 +54,9 @@ private:
   string output_file_name_ = "";
 
   // cmd for status
-  const string cmd_signal = "iwconfig wlan0";
-  const string cmd_traffic = "ip -s -d link show wlan0";
-  const string cmd_camera = "vcgencmd get_camera";
+  const char* cmd_signal = "iwconfig wlan0";
+  const char* cmd_traffic = "ip -s -d link show wlan0";
+  const char* cmd_camera = "vcgencmd get_camera";
 
   MemoryVideoWriter *memory_video_writer_ = nullptr;
 

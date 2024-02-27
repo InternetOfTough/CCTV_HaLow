@@ -9,7 +9,7 @@
 #include "ClientVideoStreamer.h"
 
 // execute command
-string VideoStreamer::executeCommand(const string& command) {
+string VideoStreamer::executeCommand(const char* command) {
     array<char, 128> buffer;
     string result;
     shared_ptr<FILE> pipe(popen(command, "r"), pclose);
@@ -60,7 +60,7 @@ string VideoStreamer::getNetworkTraffic() {
     if (regex_search(result, matches, pattern)) {
         traffic += "RX bytes: " + matches[1].str() + "\n";
         //+ ", packets: " + matches[2].str() + ", errors: " + matches[3].str() + ", dropped: " + matches[4].str() + ", missed: " + matches[5].str() + ", mcast: " + matches[6].str() + "\n";
-        traffic += "TX bytes: " + matches[7].str() + + "\n";
+        traffic += "TX bytes: " + matches[7].str() + "\n";
         //", packets: " + matches[8].str() + ", errors: " + matches[9].str() + ", dropped: " + matches[10].str() + ", missed: " + matches[11].str() + ", macast: " + matches[12].str() + "\n";
         return traffic;
     } else {
@@ -70,20 +70,19 @@ string VideoStreamer::getNetworkTraffic() {
 }
 
 // parse camera state
-bool VideoStreamer::getCamera() {
+string VideoStreamer::getCamera() {
     string result;
-    bool flag;
+
     cout << "Extracting camera state info..." << endl;
 
     result = executeCommand(cmd_camera);
 
     if (result.find("detected=1") != string::npos) {
-        flag = true;
+        return "connected";
     } else {
-        flag = false;
         cerr << "Camera module is not working." << endl;
+        return "failed";
     }
-    return flag;
 }
 
 string VideoStreamer::CheckPiStatus()
@@ -110,7 +109,7 @@ string VideoStreamer::CheckPiStatus()
         cout << "camera state: " + cameraStatus << endl;
 
         status += "wifi: " + signalLevel + "\n";
-        status += string("camera: ") + cameraStatus + "\n";
+        status += "camera: " + cameraStatus + "\n";
         status += "traffic: " + networkTraffic + "\n";
 
         cout << "Pi Status:\n" << status << endl;
