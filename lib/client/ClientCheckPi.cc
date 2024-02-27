@@ -29,7 +29,7 @@ string VideoStreamer::getSignalLevel() {
     string result;
 
     cout << "Extracting signal level info..." << endl;
-    //signal level이 존재하는지 확인
+
     regex pattern("Signal level=(-?\\d+) dBm");
     smatch matches;
 
@@ -87,7 +87,7 @@ string VideoStreamer::getCamera() {
 
 string VideoStreamer::CheckPiStatus()
 {
-    string status;
+    string status, signalLevel, networkTraffic, cameraStatus;
     // create log file
     ofstream logFile("/home/pi/log/getStatusInfoLog.txt");
 
@@ -96,9 +96,6 @@ string VideoStreamer::CheckPiStatus()
     streambuf* cerrStreamBuf = cerr.rdbuf(logFile.rdbuf());
 
     try {
-        string signalLevel, networkTraffic;
-        bool cameraStatus;
-
         signalLevel = getSignalLevel();
         cout << "wifi signal: " + signalLevel << endl;
 
