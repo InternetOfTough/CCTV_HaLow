@@ -1,15 +1,15 @@
-#include <iostream>
-#include <thread>
+#include <fstream>
+#include <regex>
 #include <chrono>
+#include <string>
+#include <cstdlib>
 #include <cstdio>
-#include <memory>
+#include <stdexcept>
 #include <array>
 #include "ClientVideoStreamer.h"
 
-using namespace std;
-
-// 명령어 실행 후 결과를 캡처하여 문자열로 반환하는 함수
-string executeCommand(const char* command) {
+// execute command
+string VideoStreamer::executeCommand(const char* command) {
     array<char, 128> buffer;
     string result;
     shared_ptr<FILE> pipe(popen(command, "r"), pclose);
@@ -24,75 +24,105 @@ string executeCommand(const char* command) {
     return result;
 }
 
-// sinalLevel.cc 실행 함수
-void runSignalLevel(string& signalLevel) {
-    cout << "sinalLevel.cc 실행 중..." << endl;
-    while (true) {
-        try {
-            signalLevel = executeCommand("./sinalLevel");
-            cout << signalLevel << endl;
-            this_thread::sleep_for(chrono::seconds(30));
-        } catch (const exception& e) {
-            // 에러 발생 시, 해당 스레드 종료
-            cerr << "sinalLevel.cc 실행 중 오류 발생: " << e.what() << endl;
-            return;
-        }
+// parse signal level
+string VideoStreamer::getSignalLevel() {
+    string result;
+
+    cout << "Extracting signal level info..." << endl;
+    //signal level이 존재하는지 확인
+    regex pattern("Signal level=(-?\\d+) dBm");
+    smatch matches;
+
+    result = executeCommand(cmd_signal);
+
+    if (regex_search(result, matches, pattern)) {
+        return matches[1].str();
+    } else {
+        cerr << "Failed to get signal level." << endl;
+        return "failed";
     }
 }
 
-// networkTraffic.cc 실행 함수
-void runNetworkTraffic(string& networkTraffic) {
-    cout << "networkTraffic.cc 실행 중..." << endl;
-    while (true) {
-        try {
-            networkTraffic = executeCommand("./networkTraffic");
-            cout << networkTraffic << endl;
-            this_thread::sleep_for(chrono::seconds(30));
-        } catch (const exception& e) {
-            cerr << "networkTraffic.cc 실행 중 오류 발생: " << e.what() << endl;
-            return;
-        }
+// parse network traffic
+string VideoStreamer::getNetworkTraffic() {
+    string result;
+
+    cout << "Extracting network traffic info..." << endl;
+
+    regex pattern("RX:\\s+bytes\\s+packets\\s+errors\\s+dropped\\s+missed\\s+mcast\\s*(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s*"
+                  ".*"
+                  "TX:\\s+bytes\\s+packets\\s+errors\\s+dropped\\s+carrier\\s+collsns\\s*(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s*");
+    smatch matches;
+
+    result = executeCommand(cmd_traffic);
+
+    string traffic;
+    if (regex_search(result, matches, pattern)) {
+        traffic += "RX bytes: " + matches[1].str() + "\n";
+        //+ ", packets: " + matches[2].str() + ", errors: " + matches[3].str() + ", dropped: " + matches[4].str() + ", missed: " + matches[5].str() + ", mcast: " + matches[6].str() + "\n";
+        traffic += "TX bytes: " + matches[7].str() + + "\n";
+        //", packets: " + matches[8].str() + ", errors: " + matches[9].str() + ", dropped: " + matches[10].str() + ", missed: " + matches[11].str() + ", macast: " + matches[12].str() + "\n";
+        return traffic;
+    } else {
+        cerr << "Failed to get network traffic information." << endl;
+        return "failed";
     }
 }
 
-// camera.cc 실행 함수
-void runCamera(string& cameraStatus) {
-    cout << "camera.cc 실행 중..." << endl;
-    while (true) {
-        try {
-            cameraStatus = executeCommand("./camera");
-            cout << cameraStatus << endl;
-            this_thread::sleep_for(chrono::minutes(1));
-        } catch (const exception& e) {
-            cerr << "camera.cc 실행 중 오류 발생: " << e.what() << endl;
-            return;
-        }
+// parse camera state
+bool VideoStreamer::getCamera() {
+    string result;
+    bool flag;
+    cout << "Extracting camera state info..." << endl;
+
+    result = executeCommand(cmd_camera);
+
+    if (result.find("detected=1") != string::npos) {
+        flag = true;
+    } else {
+        flag = false;
+        cerr << "Camera module is not working." << endl;
     }
+    return flag;
 }
 
 string VideoStreamer::CheckPiStatus()
 {
-    string signalLevel, networkTraffic, cameraStatus, status;
-    thread t1(runSignalLevel, ref(signalLevel));
-    thread t2(runNetworkTraffic, ref(networkTraffic));
-    thread t3(runCamera, ref(cameraStatus));
+    // create log file
+    ofstream logFile("/home/pi/log/getStatusInfoLog.txt");
 
-    // 각 스레드가 종료될 때까지 대기
-    t1.join();
-    t2.join();
-    t3.join();
+    // redirect output and error stream
+    streambuf* coutStreamBuf = cout.rdbuf(logFile.rdbuf());
+    streambuf* cerrStreamBuf = cerr.rdbuf(logFile.rdbuf());
 
-    status += "wifi: " + signalLevel + "\n";
-    status += "camera: " + cameraStatus + "\n";
-    status += "traffic: " + networkTraffic + "\n";
-    
+    try {
+        string signalLevel, networkTraffic, status;
+        bool cameraStatus;
+
+        signalLevel = getSignalLevel();
+        cout << "wifi signal: " + signalLevel << endl;
+
+        networkTraffic = getNetworkTraffic();
+        cout << "network traffic: " + networkTraffic << endl;
+
+        cameraStatus = getCamera();
+        cout << "camera state: " + cameraStatus << endl;
+
+        status += "wifi: " + signalLevel + "\n";
+        status += "camera: " + cameraStatus + "\n";
+        status += "traffic: " + networkTraffic + "\n";
+
+        cout << "Pi Status:\n" << status << endl;
+    } catch (const exception& e) {
+        cerr << "error occurred: " << e.what() << endl;
+    }
+
+    // recover redirection stream
+    cout.rdbuf(coutStreamBuf);
+    cerr.rdbuf(cerrStreamBuf);
+
+    // close log file
+    logFile.close();
+
     return status;
-}
-
-int main() {
-    VideoStreamer streamer;
-    string status = streamer.CheckPiStatus();
-    cout << "Pi Status:\n" << status << endl;
-
-    return 0;
 }
