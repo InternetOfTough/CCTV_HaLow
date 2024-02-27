@@ -110,7 +110,7 @@ string VideoStreamer::CheckPiStatus()
         cout << "camera state: " + cameraStatus << endl;
 
         status += "wifi: " + signalLevel + "\n";
-        status += "camera: " + cameraStatus + "\n";
+        status += string("camera: ") + cameraStatus + "\n";
         status += "traffic: " + networkTraffic + "\n";
 
         cout << "Pi Status:\n" << status << endl;
