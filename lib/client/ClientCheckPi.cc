@@ -9,7 +9,7 @@
 #include "ClientVideoStreamer.h"
 
 // execute command
-string VideoStreamer::executeCommand(const char* command) {
+string VideoStreamer::executeCommand(const string& command) {
     array<char, 128> buffer;
     string result;
     shared_ptr<FILE> pipe(popen(command, "r"), pclose);
@@ -88,6 +88,7 @@ bool VideoStreamer::getCamera() {
 
 string VideoStreamer::CheckPiStatus()
 {
+    string status;
     // create log file
     ofstream logFile("/home/pi/log/getStatusInfoLog.txt");
 
@@ -96,7 +97,7 @@ string VideoStreamer::CheckPiStatus()
     streambuf* cerrStreamBuf = cerr.rdbuf(logFile.rdbuf());
 
     try {
-        string signalLevel, networkTraffic, status;
+        string signalLevel, networkTraffic;
         bool cameraStatus;
 
         signalLevel = getSignalLevel();

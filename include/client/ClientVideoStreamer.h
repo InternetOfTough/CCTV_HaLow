@@ -31,7 +31,7 @@ public:
   void EncodeToFile(unique_ptr<grpc::ClientAsyncWriter<Frame>> &writer, VideoWriter &out);
   void EncodeToMemory(unique_ptr<grpc::ClientAsyncWriter<Frame>> &writer);
   string CheckPiStatus();
-  string executeCommand(const char* command);
+  string executeCommand(const string& command);
   string getSignalLevel();
   string getNetworkTraffic();
   bool getCamera();
