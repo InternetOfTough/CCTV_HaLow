@@ -71,7 +71,7 @@ private:
 
   bool is_connected_ = true;
 
-  int emergency_red_pixel_threshold_ratio_= 0.1
+  int emergency_red_pixel_threshold_ratio_= 0.1;
   bool is_emergency_ = false;
   
   enum class Type
