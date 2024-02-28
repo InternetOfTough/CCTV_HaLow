@@ -163,9 +163,9 @@ void VideoStreamer::StreamVideo()
 
     if (red_pixel_ratio > emergency_red_pixel_threshold_ratio_) {
       cout << "Fireeeeeeeeeeeeeeeeee" << endl;
-      is_emergency_ = "no";
+      is_emergency_ = "ok";
     }
-    else is_emergency_ = "ok";
+    else is_emergency_ = "no";
     //
     //
     //
