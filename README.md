@@ -57,6 +57,7 @@ sudo apt install unzip
 - opencv 설치 합니다.
 
 ```
+cd ~
 mkdir opencv && cd opencv
 git clone --branch 4.9.0 https://github.com/opencv/opencv.git
 git clone --branch 4.9.0 https://github.com/opencv/opencv_contrib.git
@@ -67,6 +68,7 @@ mkdir build && cd build
 - 현재 프로젝트 루트에 위치한 opencv_cmake.sh를 방금전 만든 build 디렉토리로 갖고와서 실행합니다.
 
 ```
+mv ~/CCTV_Halow/opencv_cmake.sh ~/opencv/opencv/build
 sh opencv_cmake.sh
 ```
 
