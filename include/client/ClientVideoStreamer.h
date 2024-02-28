@@ -72,7 +72,7 @@ private:
   bool is_connected_ = true;
 
   int emergency_red_pixel_threshold_ratio_= 0.1;
-  bool is_emergency_ = false;
+  string is_emergency_ = "ok";
   
   enum class Type
   {

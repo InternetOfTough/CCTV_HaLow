@@ -163,8 +163,9 @@ void VideoStreamer::StreamVideo()
 
     if (red_pixel_ratio > emergency_red_pixel_threshold_ratio_) {
       cout << "Fireeeeeeeeeeeeeeeeee" << endl;
-      is_emergency_ = true;
+      is_emergency_ = "no";
     }
+    else is_emergency_ = "ok";
     //
     //
     //
@@ -212,6 +213,7 @@ void VideoStreamer::EncodeToMemory(unique_ptr<grpc::ClientAsyncWriter<Frame>> &w
     // Frame frame_message_;
     frame_message_.set_name(pi_name_);
     frame_message_.set_status(CheckPiStatus());
+    frame_message_.set_vision(is_emergency_);
 
     // Get the memory buffer
     uint8_t *buffer = memory_video_writer_->GetMemoryBuffer();

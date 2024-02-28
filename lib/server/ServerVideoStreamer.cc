@@ -60,6 +60,9 @@ Status VideoStreamingImpl::streamVideo(ServerContext *context, ServerReader<Fram
     string *status = frame.release_status();
     std::cout << '\n'
               << *status << "\n\n";
+    string *vision = frame.release_vision();
+    std::cout << '\n'
+              << *vision << "\n\n";
     // 디렉터리 생성 여부 확인
     if (CreateDirectoryIfNotExists(kDirectoryPath, pi_name))
     {
