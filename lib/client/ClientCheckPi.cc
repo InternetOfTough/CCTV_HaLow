@@ -96,7 +96,7 @@ string VideoStreamer::getWifiInfo() {
 }
 
 // parse network traffic
-string getNetworkTraffic() {
+string VideoStreamer::getNetworkTraffic() {
     cout << "Extracting network traffic info..." << endl;
 
     static string prevResult;
