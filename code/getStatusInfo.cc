@@ -108,6 +108,50 @@ string getWifiInfo() {
 
 // parse network traffic
 string getNetworkTraffic() {
+    const string cmd = "ip -s -d link show wlan0";
+
+    cout << "Extracting network traffic info..." << endl;
+
+    static string prevResult; // Previous traffic data
+    static chrono::steady_clock::time_point prevTime = chrono::steady_clock::now(); // Time of previous measurement
+    static long long prevRxBytes = 0; // Previous RX bytes
+    static long long prevTxBytes = 0; // Previous TX bytes
+
+    string result = executeCommand(cmd);
+
+    // Parse RX and TX bytes
+    regex pattern("RX:\\s+bytes\\s+packets\\s+errors\\s+dropped\\s+missed\\s+mcast\\s*(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s*"
+                  ".*"
+                  "TX:\\s+bytes\\s+packets\\s+errors\\s+dropped\\s+carrier\\s+collsns\\s*(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s*");    
+    smatch matches;
+    if (regex_search(result, matches, pattern)) {
+        long long rxBytes = stoll(matches[1].str());
+        long long txBytes = stoll(matches[2].str());
+
+        auto currentTime = chrono::steady_clock::now();
+        // convert milliseconds to seconds
+        auto elapsedTime = chrono::duration_cast<chrono::milliseconds>(currentTime - prevTime).count() / 1000.0;
+
+        // calculate Kbps for RX and TX
+        double rxKbps = (rxBytes - prevRxBytes) * 8.0 / elapsedTime; // 8 bits in a byte
+        double txKbps = (txBytes - prevTxBytes) * 8.0 / elapsedTime;
+
+        // update previous values
+        prevResult = result;
+        prevTime = currentTime;
+        prevRxBytes = rxBytes;
+        prevTxBytes = txBytes;
+
+        return "RX Kbps: " + to_string(rxKbps) + "\nTX Kbps: " + to_string(txKbps) + "\n";
+    } else {
+        cerr << "Failed to get network traffic information." << endl;
+        return "failed";
+    }
+}
+
+/*
+// parse network traffic
+string getNetworkTraffic() {
     string result;
     const string cmd = "ip -s -d link show wlan0";
 
@@ -132,6 +176,7 @@ string getNetworkTraffic() {
         return "failed";
     }
 }
+*/
 
 // parse camera state
 string getCamera() {
