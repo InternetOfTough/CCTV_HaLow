@@ -7,7 +7,6 @@
 #include <cstdio>
 #include <stdexcept>
 #include <array>
-#include <thread>
 
 using namespace std;
 
@@ -29,25 +28,82 @@ string executeCommand(const string& command) {
     return result;
 }
 
-// parse signal level
-string getSignalLevel() {
-    string result;
-    const string interface = "wlan0";
-    const string cmd = "iwconfig " + interface + " 2>&1";
-
-    cout << "Extracting sinal level info..." << endl;
-
-    regex pattern("Tx-Power=(\\d+) dBm");
+// parse wifi ESSID
+string getWifiESSID() {
+    const string cmd = "iwconfig wlan0";
+    const regex essidRegex("ESSID:\"([^\"]+)\"");
+    string result = executeCommand(cmd);
     smatch matches;
+    return regex_search(result, matches, essidRegex) ? matches[1].str() : "failed";
+}
 
-    result = executeCommand(cmd);
+// parse wifi signal level
+string getWifiSignalLevel() {
+    const string cmd = "iwconfig wlan0";
+    const regex signalLevelRegex("Signal level=(-?\\d+) dBm");
+    string result = executeCommand(cmd);
+    smatch matches;
+    return regex_search(result, matches, signalLevelRegex) ? matches[1].str() : "failed";
+}
 
-    if (regex_search(result, matches, pattern)) {
-        return matches[1].str();
-    } else {
-        cerr << "Failed to get signal level." << endl;
-        return "failed";
-    }
+// parse IPv4 address
+string getIPv4Address() {
+    const string cmd = "ifconfig";
+    const regex ipv4Regex("inet (\\S+)");
+    string result = executeCommand(cmd);
+    smatch matches;
+    return regex_search(result, matches, ipv4Regex) ? matches[1].str() : "failed";
+}
+
+// parse IPv6 address
+string getIPv6Address() {
+    const string cmd = "ifconfig";
+    const regex ipv6Regex("inet6 (\\S+)");
+    string result = executeCommand(cmd);
+    smatch matches;
+    return regex_search(result, matches, ipv6Regex) ? matches[1].str() : "failed";
+}
+
+// parse wifi channel
+string getWifiChannel() {
+    const string cmd = "iw wlan0 info";
+    const regex channelRegex("channel (\\d+) \\((\\d+) MHz\\), width: (\\d+) MHz");
+    string result = executeCommand(cmd);
+    smatch matches;
+    return regex_search(result, matches, channelRegex) ? matches[1].str() : "failed";
+}
+
+// parse wifi frequency
+string getWifiFrequency() {
+    const string cmd = "iw wlan0 info";
+    const regex channelRegex("channel (\\d+) \\((\\d+) MHz\\), width: (\\d+) MHz");
+    string result = executeCommand(cmd);
+    smatch matches;
+    return regex_search(result, matches, channelRegex) ? matches[2].str() : "failed";
+}
+
+// parse wifi width
+string getWifiWidth() {
+    const string cmd = "iw wlan0 info";
+    const regex channelRegex("channel (\\d+) \\((\\d+) MHz\\), width: (\\d+) MHz");
+    string result = executeCommand(cmd);
+    smatch matches;
+    return regex_search(result, matches, channelRegex) ? matches[3].str() : "failed";
+}
+
+// get wifi halow info
+string getWifiInfo() {
+    cout << "Extracting wifi halow info..." << endl;
+
+    string wifi_info;
+    wifi_info += "ESSID: " + getWifiESSID() + "\n";
+    wifi_info += "Signal level: " + getWifiSignalLevel() + "\n";
+    wifi_info += "IPv4: " + getIPv4Address() + "\n";
+    wifi_info += "IPv6: " + getIPv6Address() + "\n";
+    wifi_info += "Channel: " + getWifiChannel() + "\n";
+    wifi_info += "Frequency: " + getWifiFrequency() + "\n";
+    wifi_info += "Width: " + getWifiWidth() + "\n";
+    return wifi_info;
 }
 
 // parse network traffic
@@ -68,7 +124,7 @@ string getNetworkTraffic() {
     if (regex_search(result, matches, pattern)) {
         traffic += "RX bytes: " + matches[1].str() + "\n";
         //+ ", packets: " + matches[2].str() + ", errors: " + matches[3].str() + ", dropped: " + matches[4].str() + ", missed: " + matches[5].str() + ", mcast: " + matches[6].str() + "\n";
-        traffic += "TX bytes: " + matches[7].str() + + "\n";
+        traffic += "TX bytes: " + matches[7].str() + "\n";
         //", packets: " + matches[8].str() + ", errors: " + matches[9].str() + ", dropped: " + matches[10].str() + ", missed: " + matches[11].str() + ", macast: " + matches[12].str() + "\n";
         return traffic;
     } else {
@@ -102,12 +158,11 @@ int main() {
     streambuf* coutStreamBuf = cout.rdbuf(logFile.rdbuf());
     streambuf* cerrStreamBuf = cerr.rdbuf(logFile.rdbuf());
 
-while (true) {
     try {
-        string signalLevel, networkTraffic, cameraStatus, status;
+        string wifiInfo, networkTraffic, cameraStatus, status;
 
-        signalLevel = getSignalLevel();
-        cout << "wifi signal: " + signalLevel << endl;
+        wifiInfo = getWifiInfo();
+        cout << "wifi info: \n" + wifiInfo << endl;
 
         networkTraffic = getNetworkTraffic();
         cout << "network traffic: " + networkTraffic << endl;
@@ -115,7 +170,7 @@ while (true) {
         cameraStatus = getCamera();
         cout << "camera state: " + cameraStatus << endl;
 
-        status += "wifi: " + signalLevel + "\n";
+        status += wifiInfo + "\n";
         status += "camera: " + cameraStatus + "\n";
         status += "traffic: " + networkTraffic + "\n";
 
@@ -123,8 +178,7 @@ while (true) {
     } catch (const exception& e) {
         cerr << "error occurred: " << e.what() << endl;
     }
-    this_thread::sleep_for(chrono::seconds(30)); 
-}
+
     // recover redirection stream
     cout.rdbuf(coutStreamBuf);
     cerr.rdbuf(cerrStreamBuf);
