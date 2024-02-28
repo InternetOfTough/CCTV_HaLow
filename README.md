@@ -13,3 +13,5 @@ booting.sh가 있는 경로를 crontab 실행 화면에서 아래의 명령어�
 ```
 @reboot ~/Path/booting.sh > ~/log/booting.sh.log 2>&1
 ```
+
+![1709090915139](image/README/1709090915139.png)
