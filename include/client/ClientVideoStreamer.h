@@ -32,7 +32,14 @@ public:
   void EncodeToMemory(unique_ptr<grpc::ClientAsyncWriter<Frame>> &writer);
   string CheckPiStatus();
   string executeCommand(const char* command);
-  string getSignalLevel();
+  string getWifiESSID();
+  string getWifiSignalLevel();
+  string getIPv4Address();
+  string getIPv6Address();
+  string getWifiChannel();
+  string getWifiFrequency();
+  string getWifiWidth();
+  string getWifiInfo();
   string getNetworkTraffic();
   string getCamera();
   void GrpcThread();
@@ -55,6 +62,8 @@ private:
 
   // cmd for status
   const char* cmd_signal = "iwconfig wlan0";
+  const char* cmd_ip = "ifconfig";
+  const char* cmd_channel = "iw wlan0 info";
   const char* cmd_traffic = "ip -s -d link show wlan0";
   const char* cmd_camera = "vcgencmd get_camera";
 

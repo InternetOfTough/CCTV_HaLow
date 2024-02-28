@@ -24,23 +24,75 @@ string VideoStreamer::executeCommand(const char* command) {
     return result;
 }
 
-// parse signal level
-string VideoStreamer::getSignalLevel() {
-    string result;
-
-    cout << "Extracting signal level info..." << endl;
-
-    regex pattern("Signal level=(-?\\d+) dBm");
+// parse wifi ESSID
+string VideoStreamer::getWifiESSID() {
+    const regex essidRegex("ESSID:\"([^\"]+)\"");
+    string result = executeCommand(cmd_signal);
     smatch matches;
+    return regex_search(result, matches, essidRegex) ? matches[1].str() : "failed";
+}
 
-    result = executeCommand(cmd_signal);
+// parse wifi signal level
+string VideoStreamer::getWifiSignalLevel() {
+    const regex signalLevelRegex("Signal level=(-?\\d+) dBm");
+    string result = executeCommand(cmd_signal);
+    smatch matches;
+    return regex_search(result, matches, signalLevelRegex) ? matches[1].str() : "failed";
+}
 
-    if (regex_search(result, matches, pattern)) {
-        return matches[1].str();
-    } else {
-        cerr << "Failed to get signal level." << endl;
-        return "failed";
-    }
+// parse IPv4 address
+string VideoStreamer::getIPv4Address() {
+    const regex ipv4Regex("inet (\\S+)");
+    string result = executeCommand(cmd_ip);
+    smatch matches;
+    return regex_search(result, matches, ipv4Regex) ? matches[1].str() : "failed";
+}
+
+// parse IPv6 address
+string VideoStreamer::getIPv6Address() {
+    const regex ipv6Regex("inet6 (\\S+)");
+    string result = executeCommand(cmd_ip);
+    smatch matches;
+    return regex_search(result, matches, ipv6Regex) ? matches[1].str() : "failed";
+}
+
+// parse wifi channel
+string VideoStreamer::getWifiChannel() {
+    const regex channelRegex("channel (\\d+) \\((\\d+) MHz\\), width: (\\d+) MHz");
+    string result = executeCommand(cmd_channel);
+    smatch matches;
+    return regex_search(result, matches, channelRegex) ? matches[1].str() : "failed";
+}
+
+// parse wifi frequency
+string VideoStreamer::getWifiFrequency() {
+    const regex channelRegex("channel (\\d+) \\((\\d+) MHz\\), width: (\\d+) MHz");
+    string result = executeCommand(cmd_channel);
+    smatch matches;
+    return regex_search(result, matches, channelRegex) ? matches[2].str() : "failed";
+}
+
+// parse wifi width
+string VideoStreamer::getWifiWidth() {
+    const regex channelRegex("channel (\\d+) \\((\\d+) MHz\\), width: (\\d+) MHz");
+    string result = executeCommand(cmd_channel);
+    smatch matches;
+    return regex_search(result, matches, channelRegex) ? matches[3].str() : "failed";
+}
+
+// get wifi halow info
+string VideoStreamer::getWifiInfo() {
+    cout << "Extracting wifi halow info..." << endl;
+
+    string wifi_info;
+    wifi_info += "ESSID: " + getWifiESSID() + "\n";
+    wifi_info += "Signal level: " + getWifiSignalLevel() + "\n";
+    wifi_info += "IPv4: " + getIPv4Address() + "\n";
+    wifi_info += "IPv6: " + getIPv6Address() + "\n";
+    wifi_info += "Channel: " + getWifiChannel() + "\n";
+    wifi_info += "Frequency: " + getWifiFrequency() + "\n";
+    wifi_info += "Width: " + getWifiWidth() + "\n";
+    return wifi_info;
 }
 
 // parse network traffic
@@ -87,7 +139,7 @@ string VideoStreamer::getCamera() {
 
 string VideoStreamer::CheckPiStatus()
 {
-    string status, signalLevel, networkTraffic, cameraStatus;
+    string status, wifiInfo, networkTraffic, cameraStatus;
     // create log file
     ofstream logFile("/home/pi/log/getStatusInfoLog.txt");
 
@@ -96,8 +148,8 @@ string VideoStreamer::CheckPiStatus()
     streambuf* cerrStreamBuf = cerr.rdbuf(logFile.rdbuf());
 
     try {
-        signalLevel = getSignalLevel();
-        cout << "wifi signal: " + signalLevel << endl;
+        wifiInfo = getWifiInfo();
+        cout << "wifi info: \n" + wifiInfo << endl;
 
         networkTraffic = getNetworkTraffic();
         cout << "network traffic: " + networkTraffic << endl;
@@ -105,7 +157,7 @@ string VideoStreamer::CheckPiStatus()
         cameraStatus = getCamera();
         cout << "camera state: " + cameraStatus << endl;
 
-        status += "wifi: " + signalLevel + "\n";
+        status += wifiInfo + "\n";
         status += "camera: " + cameraStatus + "\n";
         status += "traffic: " + networkTraffic + "\n";
 
