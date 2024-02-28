@@ -29,9 +29,12 @@ tar -xvzf cmake-3.28.1.tar.gz
 # 디렉토리 이동
 cd cmake-3.28.1/
 
+# OpenSSL lib install
+sudo apt install libssl-dev
+
 # 설치
 ./bootstrap
-make
+sudo make -j4
 sudo make install
 ```
 
