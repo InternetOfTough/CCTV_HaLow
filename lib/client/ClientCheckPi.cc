@@ -96,25 +96,40 @@ string VideoStreamer::getWifiInfo() {
 }
 
 // parse network traffic
-string VideoStreamer::getNetworkTraffic() {
-    string result;
-
+string getNetworkTraffic() {
     cout << "Extracting network traffic info..." << endl;
 
+    static string prevResult;
+    static chrono::steady_clock::time_point prevTime = chrono::steady_clock::now();
+    static long long prevRxBytes = 0;
+    static long long prevTxBytes = 0;
+
+    string result = executeCommand(cmd_traffic);
+
+    // parse RX and TX bytes
     regex pattern("RX:\\s+bytes\\s+packets\\s+errors\\s+dropped\\s+missed\\s+mcast\\s*(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s*"
                   ".*"
-                  "TX:\\s+bytes\\s+packets\\s+errors\\s+dropped\\s+carrier\\s+collsns\\s*(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s*");
+                  "TX:\\s+bytes\\s+packets\\s+errors\\s+dropped\\s+carrier\\s+collsns\\s*(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s*");    
     smatch matches;
-
-    result = executeCommand(cmd_traffic);
-
-    string traffic;
     if (regex_search(result, matches, pattern)) {
-        traffic += "RX bytes: " + matches[1].str() + "\n";
-        //+ ", packets: " + matches[2].str() + ", errors: " + matches[3].str() + ", dropped: " + matches[4].str() + ", missed: " + matches[5].str() + ", mcast: " + matches[6].str() + "\n";
-        traffic += "TX bytes: " + matches[7].str() + "\n";
-        //", packets: " + matches[8].str() + ", errors: " + matches[9].str() + ", dropped: " + matches[10].str() + ", missed: " + matches[11].str() + ", macast: " + matches[12].str() + "\n";
-        return traffic;
+        long long rxBytes = stoll(matches[1].str());
+        long long txBytes = stoll(matches[2].str());
+
+        auto currentTime = chrono::steady_clock::now();
+        // convert milliseconds to seconds
+        auto elapsedTime = chrono::duration_cast<chrono::milliseconds>(currentTime - prevTime).count() / 1000.0;
+
+        // calculate Kbps for RX and TX
+        double rxKbps = (rxBytes - prevRxBytes) * 8.0 / elapsedTime;
+        double txKbps = (txBytes - prevTxBytes) * 8.0 / elapsedTime;
+
+        // update previous values
+        prevResult = result;
+        prevTime = currentTime;
+        prevRxBytes = rxBytes;
+        prevTxBytes = txBytes;
+
+        return "RX Kbps: " + to_string(rxKbps) + "\nTX Kbps: " + to_string(txKbps) + "\n";
     } else {
         cerr << "Failed to get network traffic information." << endl;
         return "failed";
@@ -152,14 +167,14 @@ string VideoStreamer::CheckPiStatus()
         cout << "wifi info: \n" + wifiInfo << endl;
 
         networkTraffic = getNetworkTraffic();
-        cout << "network traffic: " + networkTraffic << endl;
+        cout << "network traffic: \n" + networkTraffic << endl;
 
         cameraStatus = getCamera();
         cout << "camera state: " + cameraStatus << endl;
 
         status += wifiInfo + "\n";
         status += "camera: " + cameraStatus + "\n";
-        status += "traffic: " + networkTraffic + "\n";
+        status += networkTraffic + "\n";
 
         cout << "Pi Status:\n" << status << endl;
     } catch (const exception& e) {
