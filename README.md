@@ -34,7 +34,7 @@ sudo apt install libssl-dev
 
 # 설치
 ./bootstrap
-make
+sudo make -j4
 sudo make install
 ```
 
