@@ -6,35 +6,53 @@
 #include <grpcpp/grpcpp.h>
 #include "streaming.grpc.pb.h"
 
+using grpc::CallbackServerContext;
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
 using grpc::ServerReader;
+using grpc::ServerReadReactor;
 using grpc::Status;
-using streaming::ServerMessage;
 using streaming::Frame;
+using streaming::ServerMessage;
 using streaming::Streaming;
 
 using namespace std;
 
-class VideoStreamingImpl final : public Streaming::Service
+// class VideoStreamingImpl final : public Streaming::Service //동기식
+class VideoStreamingImpl final : public Streaming::CallbackService // 비 동기식
 {
 public:
-  Status streamVideo(ServerContext *context, ServerReader<Frame> *reader, ServerMessage *response) override;
-    // Status streamVideo(ServerContext* context, ServerReaderWriter< ServerMessage, Frame>* stream) override;
-
-  void UpdateM3u8(unsigned int index_name, string *pi_name);
+  ServerReadReactor<Frame> *streamVideo(CallbackServerContext *context, ServerMessage *response) override; // 비동기
+  // Status streamVideo(ServerContext *context, ServerReader<Frame> *reader, ServerMessage *response) override; //동기식
 
 private:
-  // ffmpeg 명령어를 실행
-  const string kFirstCommand = "ffmpeg -i ";
-  const string kAfterCommand1 = ".mp4 -c:v copy -f hls -hls_time 10 -hls_list_size 6 -hls_delete_threshold 1 -hls_flags delete_segments+omit_endlist ./../../video/";
+  class CallBack : public ServerReadReactor<Frame>
+  {
+  public:
+    CallBack(ServerMessage *response);
+    ~CallBack();
+    void OnDone() override;
+    void OnReadDone(bool ok) override;
 
-  const string kAfterCommand2 = ".mp4 -c:v copy -f hls -hls_time 10 -hls_list_size 6 -hls_delete_threshold 1 -hls_flags delete_segments+append_list+omit_endlist ./../../video/";
-  const string kM38uName = "/output.m3u8";
+  private:
+    void UpdateM3u8(unsigned int index_name, string *pi_name);
 
-  const string kDirectoryPath = "./../../video/";
-  const string kFileType = ".mp4";
+    Frame frame_;
+    ServerMessage *response_;
+
+    unsigned int index_name_ = 1;
+
+    // ffmpeg 명령어를 실행
+    const static string kFirstCommand;
+    const static string kAfterCommand1;
+
+    const static string kAfterCommand2;
+    const static string kM38uName;
+
+    const static string kDirectoryPath;
+    const static string kFileType;
+  };
 };
 
 void RunServer(uint16_t port);

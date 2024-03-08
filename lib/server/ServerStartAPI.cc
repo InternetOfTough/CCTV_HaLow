@@ -64,9 +64,9 @@ void RunServerHLS(const std::string &address, int port)
     } });
 
   // 원하는 포트로 서버를 시작
-  // server.listen("172.30.1.27", port);
-  // std::cout << "Server started at http://172.30.1.27:9002/" << std::endl;
+  server.listen("172.30.1.27", port);
+  std::cout << "Server started at http://172.30.1.27:9002/" << std::endl;
 
-  server.listen("127.0.0.1", port);
-  std::cout << "Server started at http://127.0.0.1:9002/" << std::endl;
+  // server.listen("127.0.0.1", port);
+  // std::cout << "Server started at http://127.0.0.1:9002/" << std::endl;
 }

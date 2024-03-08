@@ -6,61 +6,85 @@
 #include "WebSockVariable.h"
 #include "directoryAPI.h"
 
-using namespace ::cv;
+// using namespace ::cv;
 using namespace ::std;
 
-Status VideoStreamingImpl::streamVideo(ServerContext *context, ServerReader<Frame> *reader, ServerMessage *response)
+const string VideoStreamingImpl::CallBack::kFirstCommand = "ffmpeg -i ";
+const string VideoStreamingImpl::CallBack::kAfterCommand1 = ".mp4 -c:v copy -f hls -hls_time 10 -hls_list_size 6 -hls_delete_threshold 1 -hls_flags delete_segments+omit_endlist ./../../video/";
+
+const string VideoStreamingImpl::CallBack::kAfterCommand2 = ".mp4 -c:v copy -f hls -hls_time 10 -hls_list_size 6 -hls_delete_threshold 1 -hls_flags delete_segments+append_list+omit_endlist ./../../video/";
+const string VideoStreamingImpl::CallBack::kM38uName = "/output.m3u8";
+
+const string VideoStreamingImpl::CallBack::kDirectoryPath = "./../../video/";
+const string VideoStreamingImpl::CallBack::kFileType = ".mp4";
+
+// Status VideoStreamingImpl::streamVideo(ServerContext *context, ServerReader<Frame> *reader, ServerMessage *response)
+ServerReadReactor<Frame> *VideoStreamingImpl::streamVideo(CallbackServerContext *context, ServerMessage *response)
 {
-  // JPG로 압축해서 영상 전송!
-  // Frame frame;
-  // while (reader->Read(&frame))
-  // {
-  //   if (is_connected)
-  //     server_web.send(hdl, frame.data(), websocketpp::frame::opcode::binary);
-  //   Mat decoded_frame;
-  //   Mat data_mat(1, frame.data().size(), CV_8U, (void *)frame.data().data());
+  return new CallBack(response);
+}
 
-  //   try
-  //   {
-  //     // OpenCV Mat으로 디코딩
-  //     decoded_frame = imdecode(data_mat, IMREAD_UNCHANGED);
-  //   }
-  //   catch (const cv::Exception &ex)
-  //   {
-  //     std::cerr << "Error decoding frame: " << ex.what() << std::endl;
-  //     return Status::CANCELLED;
-  //   }
+VideoStreamingImpl::CallBack::CallBack(ServerMessage *response)
+    : response_(response)
+{
+  cout << "One Callback instance created " << '\n';
+  StartRead(&frame_);
+}
 
-  //   if (decoded_frame.empty())
-  //   {
-  //     std::cerr << "Error decoding frame" << std::endl;
-  //     return Status::CANCELLED;
-  //   }
+VideoStreamingImpl::CallBack::~CallBack()
+{
+  cout << "One Callback instance deleted " << '\n';
+}
 
-  //   imshow("Server Stream", decoded_frame);
-  //   if (waitKey(1) == 27) // Break the loop on ESC key press
-  //     break;
-  // }
+void VideoStreamingImpl::CallBack::OnDone()
+{
+  delete this;
+}
 
-  // return Status::OK;
-
-  // MP4로 압축해서 전송 받음!
-  unsigned int index_name = 1;
-
-  Frame frame;
-  
-  response->set_msg("reboot");
-
-  while (reader->Read(&frame))
+void VideoStreamingImpl::CallBack::OnReadDone(bool ok)
+{
+  if (ok)
   {
-    string *pi_name = frame.release_name();
+
+    // JPG로 압축해서 영상 전송!
+    // Frame frame_;
+    // while (reader->Read(&frame_))
+    // {
+    //   if (is_connected)
+    //     server_web.send(hdl, frame_.data(), websocketpp::frame_::opcode::binary);
+    //   Mat decoded_frame;
+    //   Mat data_mat(1, frame_.data().size(), CV_8U, (void *)frame_.data().data());
+
+    //   try
+    //   {
+    //     // OpenCV Mat으로 디코딩
+    //     decoded_frame = imdecode(data_mat, IMREAD_UNCHANGED);
+    //   }
+    //   catch (const cv::Exception &ex)
+    //   {
+    //     std::cerr << "Error decoding frame: " << ex.what() << std::endl;
+    //     return Status::CANCELLED;
+    //   }
+
+    //   if (decoded_frame.empty())
+    //   {
+    //     std::cerr << "Error decoding frame" << std::endl;
+    //     return Status::CANCELLED;
+    //   }
+
+    //   imshow("Server Stream", decoded_frame);
+    //   if (waitKey(1) == 27) // Break the loop on ESC key press
+    //     break;
+    // }
+
+    string *pi_name = frame_.release_name();
     std::cout << '\n'
               << *pi_name << "\n\n";
 
-    string *status = frame.release_status();
+    string *status = frame_.release_status();
     std::cout << '\n'
               << *status << "\n\n";
-    string *vision = frame.release_vision();
+    string *vision = frame_.release_vision();
     std::cout << '\n'
               << *vision << "\n\n";
     // 디렉터리 생성 여부 확인
@@ -68,11 +92,11 @@ Status VideoStreamingImpl::streamVideo(ServerContext *context, ServerReader<Fram
     {
       // 디렉터리가 성공적으로 생성되면 파일에 버퍼 내용 쓰기
 
-      const string filePath = kDirectoryPath + *pi_name + "/" + to_string(index_name) + kFileType;
-      if (WriteMsgToFile(frame.release_data(), filePath)) // release_data() 메서드는 필드의 값을 반환하는 것이 아니라 해당 필드의 메모리를 해제하고 포인터를 반환
+      const string filePath = kDirectoryPath + *pi_name + "/" + to_string(index_name_) + kFileType;
+      if (WriteMsgToFile(frame_.release_data(), filePath)) // release_data() 메서드는 필드의 값을 반환하는 것이 아니라 해당 필드의 메모리를 해제하고 포인터를 반환
       {
-        std::cout << "File successfully created: " << index_name << ".mp4" << std::endl;
-        UpdateM3u8(index_name, pi_name);
+        std::cout << "File successfully created: " << index_name_ << ".mp4" << std::endl;
+        UpdateM3u8(index_name_, pi_name);
       }
       else
       {
@@ -85,14 +109,19 @@ Status VideoStreamingImpl::streamVideo(ServerContext *context, ServerReader<Fram
     }
     delete pi_name;
     delete status;
-    index_name++;
-    frame.Clear();
+    delete vision;
+    index_name_++;
+    frame_.Clear();
+    StartRead(&frame_);
   }
-
-  return Status::OK;
+  else
+  {
+    response_->set_msg("reboot");
+    Finish(Status::OK);
+  }
 }
 
-void VideoStreamingImpl::UpdateM3u8(unsigned int index_name, string *pi_name)
+void VideoStreamingImpl::CallBack::UpdateM3u8(unsigned int index_name, string *pi_name)
 {
   int result;
   if (index_name == 1)
