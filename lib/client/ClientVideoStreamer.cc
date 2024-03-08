@@ -181,7 +181,7 @@ void VideoStreamer::EncodeToMemory(unique_ptr<grpc::ClientAsyncWriter<Frame>> &w
 
     // Frame frame_message_;
     frame_message_.set_name(pi_name_);
-    frame_message_.set_status(CheckPiStatus());
+    frame_message_.set_status(pi_status_.CheckPiStatus());
     frame_message_.set_vision(is_emergency_);
 
     // Get the memory buffer

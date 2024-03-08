@@ -1,15 +1,13 @@
 #include <fstream>
 #include <regex>
 #include <chrono>
-#include <string>
 #include <cstdlib>
 #include <cstdio>
 #include <stdexcept>
 #include <array>
-#include "ClientVideoStreamer.h"
-
+#include "ClientCheckPi.h"
 // execute command
-string VideoStreamer::executeCommand(const char* command) {
+string ClientCheckPi::executeCommand(const char* command) {
     array<char, 128> buffer;
     string result;
     shared_ptr<FILE> pipe(popen(command, "r"), pclose);
@@ -25,63 +23,63 @@ string VideoStreamer::executeCommand(const char* command) {
 }
 
 // parse wifi ESSID
-string VideoStreamer::getWifiESSID() {
+string ClientCheckPi::getWifiESSID() {
     const regex essidRegex("ESSID:\"([^\"]+)\"");
-    string result = executeCommand(cmd_signal);
+    string result = executeCommand(kCmdSignal);
     smatch matches;
     return regex_search(result, matches, essidRegex) ? matches[1].str() : "failed";
 }
 
 // parse wifi signal level
-string VideoStreamer::getWifiSignalLevel() {
+string ClientCheckPi::getWifiSignalLevel() {
     const regex signalLevelRegex("Signal level=(-?\\d+) dBm");
-    string result = executeCommand(cmd_signal);
+    string result = executeCommand(kCmdSignal);
     smatch matches;
     return regex_search(result, matches, signalLevelRegex) ? matches[1].str() : "failed";
 }
 
 // parse IPv4 address
-string VideoStreamer::getIPv4Address() {
+string ClientCheckPi::getIPv4Address() {
     const regex ipv4Regex("inet (\\S+)");
-    string result = executeCommand(cmd_ip);
+    string result = executeCommand(kCmdIp);
     smatch matches;
     return regex_search(result, matches, ipv4Regex) ? matches[1].str() : "failed";
 }
 
 // parse IPv6 address
-string VideoStreamer::getIPv6Address() {
+string ClientCheckPi::getIPv6Address() {
     const regex ipv6Regex("inet6 (\\S+)");
-    string result = executeCommand(cmd_ip);
+    string result = executeCommand(kCmdIp);
     smatch matches;
     return regex_search(result, matches, ipv6Regex) ? matches[1].str() : "failed";
 }
 
 // parse wifi channel
-string VideoStreamer::getWifiChannel() {
+string ClientCheckPi::getWifiChannel() {
     const regex channelRegex("channel (\\d+) \\((\\d+) MHz\\), width: (\\d+) MHz");
-    string result = executeCommand(cmd_channel);
+    string result = executeCommand(KCmdChannel);
     smatch matches;
     return regex_search(result, matches, channelRegex) ? matches[1].str() : "failed";
 }
 
 // parse wifi frequency
-string VideoStreamer::getWifiFrequency() {
+string ClientCheckPi::getWifiFrequency() {
     const regex channelRegex("channel (\\d+) \\((\\d+) MHz\\), width: (\\d+) MHz");
-    string result = executeCommand(cmd_channel);
+    string result = executeCommand(KCmdChannel);
     smatch matches;
     return regex_search(result, matches, channelRegex) ? matches[2].str() : "failed";
 }
 
 // parse wifi width
-string VideoStreamer::getWifiWidth() {
+string ClientCheckPi::getWifiWidth() {
     const regex channelRegex("channel (\\d+) \\((\\d+) MHz\\), width: (\\d+) MHz");
-    string result = executeCommand(cmd_channel);
+    string result = executeCommand(KCmdChannel);
     smatch matches;
     return regex_search(result, matches, channelRegex) ? matches[3].str() : "failed";
 }
 
 // get wifi halow info
-string VideoStreamer::getWifiInfo() {
+string ClientCheckPi::getWifiInfo() {
     cout << "Extracting wifi halow info..." << endl;
 
     string wifi_info;
@@ -96,7 +94,7 @@ string VideoStreamer::getWifiInfo() {
 }
 
 // parse network traffic
-string VideoStreamer::getNetworkTraffic() {
+string ClientCheckPi::getNetworkTraffic() {
     cout << "Extracting network traffic info..." << endl;
 
     static string prevResult;
@@ -104,7 +102,7 @@ string VideoStreamer::getNetworkTraffic() {
     static long long prevRxBytes = 0;
     static long long prevTxBytes = 0;
 
-    string result = executeCommand(cmd_traffic);
+    string result = executeCommand(KCmdTraffic);
 
     // parse RX and TX bytes
     regex pattern("RX:\\s+bytes\\s+packets\\s+errors\\s+dropped\\s+missed\\s+mcast\\s*(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s*"
@@ -137,12 +135,12 @@ string VideoStreamer::getNetworkTraffic() {
 }
 
 // parse camera state
-string VideoStreamer::getCamera() {
+string ClientCheckPi::getCamera() {
     string result;
 
     cout << "Extracting camera state info..." << endl;
 
-    result = executeCommand(cmd_camera);
+    result = executeCommand(kCmdCamera);
 
     if (result.find("detected=1") != string::npos) {
         return "connected";
@@ -152,7 +150,7 @@ string VideoStreamer::getCamera() {
     }
 }
 
-string VideoStreamer::CheckPiStatus()
+string ClientCheckPi::CheckPiStatus()
 {
     string status, wifiInfo, networkTraffic, cameraStatus;
     // create log file
