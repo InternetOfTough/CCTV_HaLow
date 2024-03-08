@@ -91,7 +91,7 @@ void VideoStreamer::StreamVideo()
   Mat frame;
   //--- INITIALIZE VIDEOCAPTURE
   VideoCapture cap(-1);
-  
+
   // check if we succeeded
   if (!cap.isOpened())
   {
@@ -138,40 +138,9 @@ void VideoStreamer::StreamVideo()
       cerr << "ERROR! blank frame grabbed\n";
       continue;
     }
-    
-    ///////////// juno add emergency code /////////////
-    //
-    //
-    //
-    //
-    Mat hsv;
-    cvtColor(frame, hsv, COLOR_BGR2HSV);
 
-    Scalar lower_red = Scalar(0, 100, 100);
-    Scalar upper_red = Scalar(10, 255, 255);
-    Scalar lower_red2 = Scalar(160, 100, 100);
-    Scalar upper_red2 = Scalar(179, 255, 255);
+    CheckVisionEmergency(frame);
 
-    Mat mask1, mask2, red_mask;
-    inRange(hsv, lower_red, upper_red, mask1);
-    inRange(hsv, lower_red2, upper_red2, mask2);
-    red_mask = mask1 | mask2;
-
-    int red_pixel_count = countNonZero(red_mask);
-    int total_pixel_count = frame.rows * frame.cols;
-    double red_pixel_ratio = (double)red_pixel_count / total_pixel_count;
-
-    if (red_pixel_ratio > emergency_red_pixel_threshold_ratio_) {
-      cout << "Fireeeeeeeeeeeeeeeeee" << endl;
-      is_emergency_ = "ok";
-    }
-    else is_emergency_ = "no";
-    //
-    //
-    //
-    //
-    ///////////// juno add emergency code /////////////
-    
     if (is_connected_)
     {
       // Write frame to MemoryVideoWriter
@@ -191,10 +160,10 @@ void VideoStreamer::StreamVideo()
   // 클라이언트의 스트리밍 완료
   writer->WritesDone(reinterpret_cast<void *>(Type::WRITES_DONE));
 
-  if (!status_.ok())
-  {
-    cerr << "Error streaming video: " << status_.error_message() << endl;
-  }
+  // if (!status_.ok())
+  // {
+  //   cerr << "Error streaming video: " << status_.error_message() << endl;
+  // }
   // Release the VideoCapture and close OpenCV window
   cap.release();
   destroyAllWindows();
@@ -305,7 +274,7 @@ void VideoStreamer::ReadFile(string &filePath, vector<char> &buffer)
   // 파일 내용을 버퍼에 읽어오기
   if (fileSize > 0)
   {
-    buffer.resize(fileSize);                     // 버퍼 크기 조절
+    buffer.resize(fileSize);                      // 버퍼 크기 조절
     if (input_file.read(buffer.data(), fileSize)) // buffer.data()는 vector가 관리하는 데이터 버퍼의 시작 주소
     {
       cout << "Read " << fileSize << " bytes from the MP4 file." << endl;

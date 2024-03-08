@@ -43,6 +43,7 @@ public:
   string getNetworkTraffic();
   string getCamera();
   void GrpcThread();
+  void CheckVisionEmergency(Mat& frame);
 
 private:
   //for gRPC
@@ -80,6 +81,7 @@ private:
 
   bool is_connected_ = true;
 
+  //for vision
   int emergency_red_pixel_threshold_ratio_= 0.1;
   string is_emergency_ = "ok";
   
