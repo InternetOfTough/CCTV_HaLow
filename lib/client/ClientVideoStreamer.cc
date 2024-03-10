@@ -3,24 +3,47 @@
 #include <fstream>
 #include "ClientVideoStreamer.h"
 
-VideoStreamer::VideoStreamer(const string &server_address, char *pi_name)
-    : stub_(Streaming::NewStub(grpc::CreateChannel(server_address, grpc::InsecureChannelCredentials()))), pi_name_(pi_name)
+VideoStreamer::VideoStreamer(const string server_address, char *pi_name)
+    : grpc_(server_address, pi_name)
 {
   cout << "VideoStreamer instance generated" << endl;
-  grpc_thread_.reset(
-      new thread(bind(&VideoStreamer::GrpcThread, this)));
+  // grpc_thread_.reset(
+  //     new thread(bind(&VideoStreamer::GrpcThread, this)));
 }
 
 VideoStreamer::~VideoStreamer()
 {
-  cout << "Shutting down client...." << endl;
   cout << "VideoStreamer instance deleted" << endl;
-  cq_.Shutdown();
-  grpc_thread_->join();
+  // cq_.Shutdown();
+  // grpc_thread_->join();
+}
+void VideoStreamer::Initialize(VideoCapture &cap, int &first_fps)
+{
+  // check if we succeeded
+  if (!cap.isOpened())
+  {
+    cerr << "ERROR! Unable to open camera\n";
+    exit(1);
+  }
+
+  // setup camera
+  cap.set(CAP_PROP_FPS, first_fps);
+  cap.set(CAP_PROP_FRAME_WIDTH, 320);
+  cap.set(CAP_PROP_FRAME_HEIGHT, 240);
+  frame_width_ = static_cast<int>(cap.get(CAP_PROP_FRAME_WIDTH));
+  frame_height_ = static_cast<int>(cap.get(CAP_PROP_FRAME_HEIGHT));
+
+  cout << "Width : " << frame_width_ << endl;
+  cout << "Height : " << frame_height_ << endl;
+
+  // MemoryVideoWriter setup
+  memory_video_writer_ = new MemoryVideoWriter(frame_width_, frame_height_, first_fps);
+
+  output_file_name_.append(to_string(name_index_));
+  output_file_name_.append(kFileType);
 }
 
 void VideoStreamer::StreamVideo()
-
 {
 
   // jpg로 압축해서 전송!!
@@ -91,44 +114,14 @@ void VideoStreamer::StreamVideo()
   Mat frame;
   //--- INITIALIZE VIDEOCAPTURE
   VideoCapture cap(-1);
-
-  // check if we succeeded
-  if (!cap.isOpened())
-  {
-    cerr << "ERROR! Unable to open camera\n";
-    exit(1);
-  }
-
-  // setup camera
   int first_fps = 10;
-  cap.set(CAP_PROP_FPS, first_fps);
-  cap.set(CAP_PROP_FRAME_WIDTH, 320);
-  cap.set(CAP_PROP_FRAME_HEIGHT, 240);
-  frame_width_ = static_cast<int>(cap.get(CAP_PROP_FRAME_WIDTH));
-  frame_height_ = static_cast<int>(cap.get(CAP_PROP_FRAME_HEIGHT));
-
-  cout << "Width : " << frame_width_ << endl;
-  cout << "Height : " << frame_height_ << endl;
-
-  // MemoryVideoWriter setup
-  memory_video_writer_ = new MemoryVideoWriter(frame_width_, frame_height_, first_fps);
-
-  output_file_name_.append(to_string(name_index_));
-  output_file_name_.append(kFileType);
+  Initialize(cap, first_fps);
 
   // 비디오 작성자 생성
   VideoWriter out(output_file_name_, VideoWriter::fourcc('a', 'v', 'c', '1'), first_fps, Size(frame_width_, frame_height_), true); // fps = 30, avc1-> H.264 코덱의 일종
-
   // 시작 시간 기록
-  // Send mp4 to server
-  cout << "\nconnecting....\n";
-  // unique_ptr<grpc::ClientAsyncWriter<Frame>> writer(stub_->streamVideo(&context_, &response));
-  unique_ptr<grpc::ClientAsyncWriter<Frame>> writer(stub_->AsyncstreamVideo(&context_, &response_, &cq_,
-                                                                            reinterpret_cast<void *>(Type::CONNECT)));
-
   start_tick_count_ = getTickCount();
-
-  // writer->Finish(&status_, reinterpret_cast<void *>(Type::FINISH)); // async method to receive server msg(return value)
+  // grpc_.Finish();
   while (true)
   {
     cap.read(frame);
@@ -141,64 +134,51 @@ void VideoStreamer::StreamVideo()
 
     CheckVisionEmergency(frame);
 
-    if (is_connected_)
+    if (grpc_.GetIsConnected())
     {
       // Write frame to MemoryVideoWriter
       memory_video_writer_->WriteFrame(frame);
-      EncodeToMemory(writer);
+      EncodeToMemory();
       frame_count_++;
       continue;
     }
     // 비디오 작성
     // out.write(frame);
-    // EncodeToFile(writer, out);
+    // EncodeToFile(out);
     // frame_count_++;
     cerr << "server disconnected " << endl;
     exit(1);
   }
 
   // 클라이언트의 스트리밍 완료
-  writer->WritesDone(reinterpret_cast<void *>(Type::WRITES_DONE));
+  grpc_.WriteDone();
 
-  // if (!status_.ok())
-  // {
-  //   cerr << "Error streaming video: " << status_.error_message() << endl;
-  // }
   // Release the VideoCapture and close OpenCV window
+  delete memory_video_writer_;
   cap.release();
-  destroyAllWindows();
 }
-void VideoStreamer::EncodeToMemory(unique_ptr<grpc::ClientAsyncWriter<Frame>> &writer)
+
+void VideoStreamer::EncodeToMemory()
 {
   // 경과 시간 계산
   double elapsed_seconds = (getTickCount() - start_tick_count_) / getTickFrequency();
 
   cout << "경과 시간 :" << elapsed_seconds << endl;
-  // 지정된 시간 동안 캡처
+  // 지정된 시간 동안 촬영 후 전송
   if (elapsed_seconds >= kDurationSeconds)
   {
     int64 delay_start = getTickCount();
 
-    // Frame frame_message_;
-    frame_message_.set_name(pi_name_);
-    frame_message_.set_status(pi_status_.CheckPiStatus());
-    frame_message_.set_vision(is_emergency_);
+    grpc_.SetOther(pi_status_.CheckPiStatus(), is_emergency_);
 
     // Get the memory buffer
     uint8_t *buffer = memory_video_writer_->GetMemoryBuffer();
 
     // Set the buffer to the frame message
-    frame_message_.mutable_data()->assign(reinterpret_cast<const char *>(buffer), memory_video_writer_->GetMemoryBufferSize());
-    cout << "buffer_size " << memory_video_writer_->GetMemoryBufferSize() << endl;
-    // Send mp4 to server
-    // if (!writer->Write(frame_message_))
-    // {
-    //   cerr << "server disconnected " << endl;
-    //   exit(1);
-    // }
+    grpc_.SetVideoFromMemory(buffer, memory_video_writer_->GetMemoryBufferSize());
 
-    writer->Write(frame_message_, reinterpret_cast<void *>(Type::WRITE));
-    frame_message_.Clear();
+    // Send mp4 to server
+    grpc_.Write();
 
     memory_video_writer_->Reset(frame_count_ / kDurationSeconds, buffer);
 
@@ -209,8 +189,7 @@ void VideoStreamer::EncodeToMemory(unique_ptr<grpc::ClientAsyncWriter<Frame>> &w
   }
 }
 
-void VideoStreamer::EncodeToFile(unique_ptr<grpc::ClientAsyncWriter<Frame>> &writer, VideoWriter &out)
-// void VideoStreamer::encodeToFile(unique_ptr<grpc::ClientWriter<Frame>> &writer, VideoWriter &out)
+void VideoStreamer::EncodeToFile(VideoWriter &out)
 {
   // 경과 시간 계산
   double elapsed_seconds = (getTickCount() - start_tick_count_) / getTickFrequency();
@@ -229,15 +208,9 @@ void VideoStreamer::EncodeToFile(unique_ptr<grpc::ClientAsyncWriter<Frame>> &wri
     ReadFile(output_file_name_, buffer);
 
     // Set the buffer to the frame message
-    frame_message_.mutable_data()->assign(buffer.begin(), buffer.end());
-    frame_message_.Clear();
+    grpc_.SetVideoFromFile(buffer);
 
-    // if (!writer->Write(frame_message_))
-    // {
-    //   cerr << "server disconnected " << endl;
-    // }
-
-    writer->Write(frame_message_, reinterpret_cast<void *>(Type::WRITE));
+    grpc_.Write();
 
     name_index_++;
     output_file_name_.clear();
@@ -292,59 +265,4 @@ void VideoStreamer::ReadFile(string &filePath, vector<char> &buffer)
 
   // 파일 닫기
   input_file.close();
-}
-
-void VideoStreamer::GrpcThread()
-{
-  while (true)
-  {
-    void *got_tag;
-    bool ok = false;
-
-    // blocking until next event occur
-    if (!cq_.Next(&got_tag, &ok))
-    {
-      cerr << "Client stream closed. Quitting" << endl;
-      break;
-    }
-
-    if (ok)
-    {
-      cout << endl
-           << "**** Processing completion queue tag " << got_tag
-           << endl;
-      switch (static_cast<Type>(reinterpret_cast<long>(got_tag)))
-      {
-
-      case Type::WRITE:
-        is_connected_ = true;
-        cout << "Sending video chunk (async)." << endl;
-        break;
-      case Type::CONNECT:
-        cout << "Server connected." << endl;
-        break;
-      case Type::WRITES_DONE:
-        cout << "Server disconnecting." << endl;
-        break;
-      case Type::FINISH:
-        // cout << "Client finish; status = "
-        //           << (finish_status_.ok() ? "ok" : "cancelled")
-        //           << endl;
-        cout << "finish \nresponse:" << response_.msg() << endl;
-        context_.TryCancel();
-        cq_.Shutdown();
-        break;
-      default:
-        cerr << "Unexpected tag " << got_tag << endl;
-        GPR_ASSERT(false);
-      }
-      continue;
-    }
-
-    if (!ok && static_cast<Type>(reinterpret_cast<long>(got_tag)) == Type::WRITE)
-    {
-      is_connected_ = false;
-      cout << "write failed. \n video is stored in local storage now." << endl;
-    }
-  }
 }

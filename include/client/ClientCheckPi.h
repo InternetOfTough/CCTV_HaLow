@@ -1,3 +1,6 @@
+#ifndef CHECK_PI_STATUS_H
+#define CHECK_PI_STATUS_H
+
 #include <string>
 #include <iostream>
 
@@ -30,3 +33,5 @@ private:
     const char *KCmdTraffic = "ip -s -d link show wlan0";
     const char *kCmdCamera = "vcgencmd get_camera";
 };
+
+#endif
