@@ -7,15 +7,11 @@ VideoStreamer::VideoStreamer(const string server_address, char *pi_name)
     : grpc_(server_address, pi_name)
 {
   cout << "VideoStreamer instance generated" << endl;
-  // grpc_thread_.reset(
-  //     new thread(bind(&VideoStreamer::GrpcThread, this)));
 }
 
 VideoStreamer::~VideoStreamer()
 {
   cout << "VideoStreamer instance deleted" << endl;
-  // cq_.Shutdown();
-  // grpc_thread_->join();
 }
 void VideoStreamer::Initialize(VideoCapture &cap, int &first_fps)
 {
