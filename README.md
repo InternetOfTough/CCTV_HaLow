@@ -140,9 +140,9 @@ sudo apt-get install libssl-dev
 
 - ~~/project_root/lib/server에 위치한 browser.html을 크롬같은 웹브라우저로 실행하시면 웹브라우저에서 영상을 볼 수 있습니다.~~
 
-![Alt text](./img/2024-01-24 223841.png)
+![alt text](./img/2024-01-24_223841.png)
 
-### ffmpeg + HLS를 이용한 실시간 영상 플레이
+### ffmpeg + HLS + C++ http 서버를 이용한 실시간 영상 플레이
 
 - /project_root/lib/server에 위치한 hlsjs.html을 크롬같은 웹브라우저로 실행하시면 웹브라우저에서 영상을 볼 수 있습니다.
 - `./lib/server/ServerStartAPI.cc` 파일에서 아래 함수들의 절대 경로를 실제 개발환경에 맞게 바꿔줘야 하며 코드에 있는 `pi5`는 모두 client 실행시 cmd 인자로 입력했던 pi 이름으로 바꿔줘야합니다.(vsc 사용시 ctrl + h 추천)
