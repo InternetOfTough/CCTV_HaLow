@@ -5,9 +5,6 @@
 #include <iostream>
 #include "ClientVideoStreamer.h"
 
-// using namespace cv;
-// using namespace std;
-
 // set server ip addr and port num for grpc
 // ABSL_FLAG(std::string, target, "172.30.1.27:10000", "Server address");
 

@@ -215,7 +215,6 @@ void MemoryVideoWriter ::EncodeVideoFrame(AVFrame *av_frame)
     // Receive encoded packet
     while (ret >= 0)
     {
-        // av_packet_unref(pkt_);
         // 인코딩된 패킷을 받아오는 함수로, 여러 번 호출되어 더 이상 받아올 패킷이 없을 때 AVERROR(EAGAIN)이 반환
         // AVERROR_EOF:-541478725
         // AVERROR(EAGAIN) : -11
@@ -235,13 +234,10 @@ void MemoryVideoWriter ::EncodeVideoFrame(AVFrame *av_frame)
         av_log(NULL, AV_LOG_DEBUG, "Muxing frame\n");
 
         // Write packet to memory buffer
-        // av_interleaved_write_frame(format_ctx_,pkt_);
-        // avio_write(avio_ctx_, pkt_->data, pkt_->size);
         av_write_frame(format_ctx_, pkt_);
 
         encoded_frame_count_++;
         std::cout << "done encoding frame!!" << std::endl;
-        // av_packet_unref(pkt_);
     }
 }
 

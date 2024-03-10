@@ -45,38 +45,6 @@ void VideoStreamingImpl::CallBack::OnReadDone(bool ok)
 {
   if (ok)
   {
-
-    // JPG로 압축해서 영상 전송!
-    // Frame frame_;
-    // while (reader->Read(&frame_))
-    // {
-    //   if (is_connected)
-    //     server_web.send(hdl, frame_.data(), websocketpp::frame_::opcode::binary);
-    //   Mat decoded_frame;
-    //   Mat data_mat(1, frame_.data().size(), CV_8U, (void *)frame_.data().data());
-
-    //   try
-    //   {
-    //     // OpenCV Mat으로 디코딩
-    //     decoded_frame = imdecode(data_mat, IMREAD_UNCHANGED);
-    //   }
-    //   catch (const cv::Exception &ex)
-    //   {
-    //     std::cerr << "Error decoding frame: " << ex.what() << std::endl;
-    //     return Status::CANCELLED;
-    //   }
-
-    //   if (decoded_frame.empty())
-    //   {
-    //     std::cerr << "Error decoding frame" << std::endl;
-    //     return Status::CANCELLED;
-    //   }
-
-    //   imshow("Server Stream", decoded_frame);
-    //   if (waitKey(1) == 27) // Break the loop on ESC key press
-    //     break;
-    // }
-
     string *pi_name = frame_.release_name();
     std::cout << '\n'
               << *pi_name << "\n\n";
