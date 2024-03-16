@@ -3,7 +3,6 @@
 #include "streaming.grpc.pb.h"
 #include <opencv2/opencv.hpp>
 #include "ServerVideoStreamer.h"
-#include "WebSockVariable.h"
 #include "directoryAPI.h"
 
 // using namespace ::cv;
