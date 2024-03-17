@@ -1,6 +1,6 @@
 # CCTV Network using Wifi-HaLow
 
-주제: WiFi HaLow를 활용한 한동 캠퍼스 CCTV IoT 네트워크 구축 
+## WiFi HaLow를 활용한 한동 캠퍼스 CCTV IoT 네트워크 구축 
 - WiFi HaLow 기술을 활용하여 한동 캠퍼스 안에 IoT 네트워크를 구축하시오. 
 - 한동 캠퍼스 내에 분산 배치된 IoT 노드들은 실시간 CCTV 영상을 서버로 전달 해야함. 
 - IoT 노드는 라즈베리파이와 카메라를 활용하여 CCTV 노드를 구현해야 함. 
@@ -13,19 +13,20 @@
 - 이외에 언급되지 않는 부분들은 자유롭게 진행할 것
 - 라즈베리파이 이외에 필요한 재료는 구매해야 하므로 고윤민 교수에게 빠른 시일 내에 연락할 것
 
-목적 <br>
+## 목적 <br>
 노드 : 라즈베리파이+카메라+전원 / 비디오 스트리밍 <br>
-서버 : 비디오 수신(with 상태 확인) 및 저장, 웹실행 <br>
-웹 인터페이스 : 지도/목록 상에서 각 노드의 상태 확인(위치, 활성화, 배터리) + cctv 재생(실시간, 저장본) <br>
+서버 : 비디오 수신(with Halow 연결 상태 확인) 및 저장, 웹실행 <br>
+웹 인터페이스 : 지도/목록 상에서 각 노드의 상태 확인(위치, 활성화, 배터리) + cctv 재생(실시간) <br>
 
-기술 <br>
-웹 벡엔드 <br>
-비디오 스트리밍(각 노드) <br>
-AWS 송수신(서버-게이트웨이) [[AWScpp]](https://sdk.amazonaws.com/cpp/api/LATEST/root/html/index.html)<br>
 
-HW <br>
+## 재료 <br>
+
 라즈베리파이 <br>
 카메라 <br>
-halow모듈 [[vctec]](https://ko.aliexpress.com/item/1005004619322188.html](https://vctec.co.kr/product/wifi-halow-%ED%86%B5%EC%8B%A0-hat-%EB%B3%B4%EB%93%9C-915mhz-alfa-network-wifi-halow-hat/20592/)https://vctec.co.kr/product/wifi-halow-%ED%86%B5%EC%8B%A0-hat-%EB%B3%B4%EB%93%9C-915mhz-alfa-network-wifi-halow-hat/20592/)<br>
+ [배터리]( https://www.coupang.com/vp/products/7811492839?itemId=21190477617&vendorItemId=88251829458&q=%EC%83%A4%EC%98%A4%EB%AF%B8+%EB%B3%B4%E)<br>
+ [halow 모듈]( https://vctec.co.kr/product/wifi-halow-%ED%86%B5%EC%8B%A0-hat-%EB%B3%B4%EB%93%9C-915mhz-alfa-network-wifi-halow-hat/20592/#none)<br>
+[halow 안테나]( https://vctec.co.kr/product/wifi-halow-%EC%95%88%ED%85%8C%EB%82%98-sma-915mhz-wifi-halow-antenna-sma-915mhz/20591/category/161/display/1/#none)<br>
 
-![image](https://github.com/baejaeho18/HandongCCTV_HaLow/assets/37645490/3acc767a-006d-44fa-a789-295b2d445a48)
+## Project Architecture
+
+![alt text](image.png)
