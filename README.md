@@ -1,7 +1,8 @@
-# CCTV Network using Wifi-HaLow
+# CCTV Network using WiFi-HaLow
 
 ## WiFi HaLow를 활용한 한동 캠퍼스 CCTV IoT 네트워크 구축 
 - WiFi HaLow 기술을 활용하여 한동 캠퍼스 안에 IoT 네트워크를 구축하시오. 
+- 900 MHz 대역을 사용하는 WiFi HaLow의 경우 기존의 2.4GHz와 5GHz WiFi보다 더 넓은 범위로 신호를 전달 할 수 있음 
 - 한동 캠퍼스 내에 분산 배치된 IoT 노드들은 실시간 CCTV 영상을 서버로 전달 해야함. 
 - IoT 노드는 라즈베리파이와 카메라를 활용하여 CCTV 노드를 구현해야 함. 
 - 서버는 IoT 노드들로부터 전송되는 CCTV 영상을 지속적으로 녹화할 수 있음. 
