@@ -88,7 +88,7 @@ sudo make install
 pkg-config --modversion opencv4
 ```
 
-- 영상을 브라우저에서 확인하기위해서 웹소켓 라이브러리를 설치합니다.
+- ~~영상을 브라우저에서 확인하기위해서 웹소켓 라이브러리를 설치합니다.~~
 
 ```
 sudo apt-get install libwebsocketpp-dev
